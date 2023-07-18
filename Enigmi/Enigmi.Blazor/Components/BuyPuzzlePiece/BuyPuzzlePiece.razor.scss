@@ -1,0 +1,106 @@
+﻿@import "variables";
+
+.buy-puzzle-piece {
+    width: 320px;
+    height: calc(100vh - $page-header-height);
+
+    .panel-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .puzzle-size-label {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .quantity {
+            height: 62px;
+            text-align: right;
+        }
+
+        .form-label {
+            margin-bottom: 0;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .bought-puzzle-pieces,
+        .trade-in-puzzle-pieces {
+            max-height: 220px;
+            display: flex;
+            gap: 4px;
+            border: 1px solid silver;
+            border-radius: 6px;
+            padding: 4px;
+            overflow-y: auto;
+            flex-wrap: wrap;
+
+            .puzzle-piece {
+                width: 85px;
+                height: 85px;
+            }
+        }
+
+        .bought-puzzle-pieces .puzzle-piece
+        {
+            border: 1px solid #f5f5f5;
+        }
+
+        .buy-quantity {
+            padding-left: 0;
+        }
+
+        .buy-trade-in {
+            cursor: pointer;
+
+            .form-check-label {
+                font-weight: bold;
+                font-size: 14px;
+            }
+        }
+
+        .buy-btn,
+        .buy-more-btn {
+            margin-top: 8px;
+        }
+
+        .buy-btn {
+            position: relative;
+
+            .spinner-border {
+                position: absolute;
+                top: 8px;
+                left: 4px;
+            }
+        }
+
+        .buy-price-details {
+            background-color: #f5f5f5;
+            padding: 4px;
+            border-radius: 6px;
+            text-align: right;
+
+            label {
+                font-weight: bold;
+                font-size: 14px;
+            }
+
+            .value {
+                width: 50%;
+                border-radius: 6px;
+                border: 1px solid white;
+                background-color: white;
+                margin: 4px;
+                padding: 4px;
+                font-size: 15px;
+            }
+
+            .original-price {
+                text-decoration: line-through;
+                color: gray;
+                margin-left: 4px;
+            }
+        }
+    }
+}

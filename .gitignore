@@ -1,0 +1,61 @@
+#OS junk files
+[Tt]humbs.db
+*.DS_Store
+
+#Visual Studio files
+[Bb]in
+[Oo]bj
+[Dd]ebug*/
+[Rr]elease*/
+[Ff]akesAssemblies
+*.[Cc]ache
+*.pdb
+*.suo
+*.bak
+*.log
+*.user
+*.vspscc
+*.vssscc
+*.orig
+suo*.tmp
+*.psess
+_UpgradeReport*/
+UpgradeLog*
+.vs/
+*.ini
+Export
+TempImages
+FireArmLicences
+CertificateImages
+*.webinfo
+
+#Tooling
+_ReSharper*/
+*.resharper
+[Tt]est[Rr]esult*
+[Pp]ackages
+
+#Project files
+[Bb]uild/
+
+#Subversion files
+.svn
+
+#WCF
+*.svclog
+
+#elmah error files
+error*.xml
+
+# vim files
+*.swp
+*.SWP
+
+TestSmd.VisualState.xml
+
+
+/Enigmi/Enigmi.Blazor/wwwroot/css/app.css
+/Enigmi/Enigmi.Blazor/wwwroot/css/app.css.map
+
+/Enigmi/Enigmi.Tests/appsettings.local.json
+/Enigmi/Enigmi.Host/appsettings.local.json

@@ -1,0 +1,24 @@
+﻿@using Enigmi.Blazor.Components.PuzzlePiece
+@using Enigmi.Blazor.Shared.Models;
+@using Enigmi.Blazor.Utils
+
+
+<div class="view-puzzle-pieces mini-map-list">
+    @foreach (var puzzle in UserPuzzles)
+    {
+        <div class="puzzle-container" @onclick="() => OnUserPuzzleClicked(puzzle)">
+
+            <div class="puzzle puzzle-@puzzle.PuzzleSize @(IsActivePuzzleDefinition(puzzle.PuzzleId) ? "active": "")">
+                <div class="puzzle-pieces">
+                    @foreach (var puzzlePiece in puzzle.PuzzlePieces)
+                    {
+                        <PuzzlePiece ImageUrl="@puzzlePiece.PuzzlePiece?.ImageUrl"
+                             PuzzlePieceItem="puzzlePiece.PuzzlePiece"   
+                             ShowDuplicateIcon="puzzlePiece.OwnedCount > 1"
+                             IsOwned="puzzlePiece.PuzzlePiece?.IsOwned ?? false" />
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

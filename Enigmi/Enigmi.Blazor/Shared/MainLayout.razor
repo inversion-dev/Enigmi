@@ -1,0 +1,58 @@
+﻿@using CardanoSharp.Blazor.Components
+@using CardanoSharp.Blazor.Components.Enums
+@using Enigmi.Blazor.Components.ScreenBlocker
+@using Enigmi.Blazor.Utils
+@using Blazored.Toast.Configuration
+@inherits LayoutComponentBase
+@inject WalletConnection WalletConnection
+
+@inject AuthenticationClient AuthenticationClient
+@inject SignalRClient SignalRClient
+@inject ApiClient ApiClient
+@inject TabVisibilityHandler TabVisibilityHandler
+
+<ScreenBlocker />
+
+<BlazoredToasts Position="ToastPosition.TopRight"
+                Timeout="10"
+                IconType="IconType.FontAwesome"
+                SuccessClass="success-toast-override"
+                SuccessIcon="fa fa-thumbs-up"
+                ErrorIcon="fa fa-bug" />
+
+<div class="page">
+    @if (this.AuthenticationClient.IsAuthenticated)
+    {
+        @Body    
+    }
+    else
+    {
+        <div style="text-align: center">
+            
+            <img class="logo" src="images/logo.png" alt="Enigmi Logo">
+            
+            <h2>
+                Please connect your wallet to continue.
+            </h2>
+
+            <WalletConnector
+                @ref="WalletConnector"
+                PersistConnectedWallet="true"
+                OnConnect="WalletConnection.OnWalletConnect"
+                OnDisconnect="WalletConnection.OnWalletDisconnect"
+                OnConnectError="OnWalletConnectError"
+                AutoCloseOnConnect="true"
+                DisableEscapeToClose="false"
+                HideOnModalClick=ModalClickHideOptions.WhenConnected
+                HideCloseButton="true">
+            </WalletConnector>
+            
+            @if (IsAuthenticating)
+            {
+                <div class="authentication-indicator">
+                    <span class="spinner-border"></span> &nbsp;&nbsp; Authenticating ...
+                </div>
+            }
+        </div>
+    }
+</div>

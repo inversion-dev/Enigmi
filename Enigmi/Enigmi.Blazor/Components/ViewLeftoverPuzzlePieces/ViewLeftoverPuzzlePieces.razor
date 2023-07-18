@@ -1,0 +1,22 @@
+﻿@using Enigmi.Blazor.Components.PuzzlePiece
+@if (!Visible) return;
+
+<div class="view-leftover-puzzle-pieces">
+@foreach (var puzzle in LeftoverPuzzles)
+{
+    <div class="puzzle puzzle-@puzzle.PuzzlePieces.Count">
+        <div class="puzzle-pieces">
+        @foreach(var piece in puzzle.PuzzlePieces)
+        {
+            <PuzzlePiece PuzzlePieceItem="piece.PuzzlePiece"
+                ImageUrl="@piece.PuzzlePiece?.ImageUrl"
+                ShowDuplicateIcon="true"
+                AvailablePuzzlePieceCount="@piece.OwnedCount"/>
+        }
+        </div>
+        <div class="info-overlay">
+            <b>@puzzle.CollectionTitle</b><span>@puzzle.PuzzleTitle</span>
+        </div>
+    </div>
+}
+</div>

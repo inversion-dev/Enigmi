@@ -1,0 +1,32 @@
+﻿
+<button class="btn @(CustomCss) @(Enabled ? "" : "disabled")" disabled="@(!Enabled)" @onclick="HandleClickEvent">@ChildContent</button>
+
+@code {
+    
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [EditorRequired, Parameter]
+    public Func<Task> ClickAction { get; set; } = null!;
+
+    [Parameter]
+    public bool Enabled { get; set; } = true;
+
+    [Parameter]
+    public string CustomCss { get; set; } = "btn-dark";
+    
+    public async void HandleClickEvent()
+    {
+        try
+        {
+            Enabled = false;
+            StateHasChanged();
+
+            await ClickAction();
+        }
+        finally
+        {
+            Enabled = true;
+        }
+    }
+}

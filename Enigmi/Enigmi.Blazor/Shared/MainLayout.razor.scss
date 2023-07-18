@@ -1,0 +1,26 @@
+@import 'variables';
+
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-header {
+    padding: 12px;
+    height: $page-header-height;
+    box-shadow: rgb(0 0 0 / 5%) 0px 6px 24px 0px, rgb(0 0 0 / 8%) 0px 0px 0px 1px;
+    border-bottom: 1px solid #bebebe;
+}
+
+.page-content {
+    height: calc(100vh - $page-header-height);
+}
+
+.authentication-indicator
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}

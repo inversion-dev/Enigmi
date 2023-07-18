@@ -1,0 +1,28 @@
+﻿@using Enigmi.Blazor.Components.IconButton
+
+<div class="menu">
+	<img class="logo" src="images/logo.png">
+	<div class="buttons">
+
+		<IconButton Enabled="IsBuyNewPieceEnabled" Text="Buy New Piece" IconUrl="images/puzzle-piece-icon.svg" ClickAction="ShowBuyPuzzlePiece" TextSize="TextSize.Medium" />
+
+		<div class="btn-group btn-group-sm" role="group" aria-label="Large button group">
+			<IconButton Text="@OwnedPuzzlePieceCount.ToString()" IconUrl="images/puzzle-piece-icon.svg" TextSize="TextSize.ExtraLarge" />
+			<IconButton Text="@OwnedPuzzleCount.ToString()" IconUrl="images/puzzle-icon-outline.svg" TextSize="TextSize.ExtraLarge" />
+			<IconButton Text="@LeftoverPuzzlePieceCount.ToString()" IconUrl="images/puzzle-piece-trash-icon.svg" TextSize="TextSize.ExtraLarge" />
+		</div>
+
+		<div class="btn-group btn-group-sm" role="group" aria-label="Large button group">
+
+			<IconButton Text="@TradeCount.ToString()" IconUrl="images/trade.svg" TextSize="TextSize.ExtraLarge" />
+
+			<div class="trade-timers">
+				<!-- todo -->
+			</div>
+
+			<IconButton Text="@NotificationCount.ToString()" IconUrl="images/bell.svg" TextSize="TextSize.ExtraLarge" />
+			<IconButton Text="@UserName" IconUrl="images/user.svg" TextSize="TextSize.Large" />
+
+		</div>
+	</div>
+</div>

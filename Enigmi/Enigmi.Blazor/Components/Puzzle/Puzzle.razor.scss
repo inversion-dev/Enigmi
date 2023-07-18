@@ -1,0 +1,106 @@
+﻿.view-puzzle-pieces {   
+
+    .not-owned {
+        filter: grayscale(1);
+        opacity: 0.1;
+    }
+
+    .puzzle-container {
+        position: relative;
+        padding: 5px;
+        border: 1px solid whitesmoke;
+        border-radius: 6px;
+        box-shadow: unquote("rgb(0 0 0 / 16%) 0px 1px 4px");        
+
+        .puzzle-info-header {
+            display: flex;
+            justify-content: space-between;
+
+            .puzzle-info-header-buttons {
+                display: flex;
+                gap: 8px;
+            }
+        }
+
+        .puzzle {
+            position: relative;
+
+            &.puzzle-4 {
+                .puzzle-piece {
+                    width: 50%;
+                    height: 50%;
+                }
+            }
+
+            &.puzzle-9 {
+                .puzzle-piece {
+                    width: 33.33%;
+                    height: 33.33%;
+                }
+            }
+
+            &.puzzle-16 {
+                .puzzle-piece {
+                    width: 25%;
+                    height: 25%;
+                }
+            }
+
+            .puzzle-pieces {
+                width: 640px;
+                height: 640px;
+                display: flex;
+                flex-direction: column;
+                flex-wrap: wrap;
+
+                .puzzle-piece {
+                    border: 1px solid whitesmoke;
+                }
+            }
+
+            .info-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: none;
+
+                .info-item-container {
+                    display: flex;
+                    flex-direction: column;
+                    row-gap: 13px;
+                    padding: 8px;
+                    width: 400px;
+                    background: #f1f1f1;
+                    border-radius: 6px;
+                }
+
+                .info-item {
+                    border-radius: 6px;
+                    background: #f1f1f1;
+                    display: flex;
+                    padding: 4px;
+                    flex-direction: column;
+                }
+
+                .info-label {
+                    padding: 2px 4px;
+                    margin-right: 8px;
+                    text-align: left;
+                }
+
+                .info-value {
+                    background-color: white;
+                    padding: 2px 4px;
+                    border-radius: 6px;
+                    flex: 1;
+                    word-break: break-all;
+                    text-align: left;
+                    display: flex;
+                    align-items: center;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,148 @@
+﻿@using Enigmi.Blazor.Components
+@using Enigmi.Blazor.Components.PuzzlePiece
+@using System.Collections.ObjectModel
+
+@if (!Visible) return;
+
+<div class="panel buy-puzzle-piece">
+    <div class="panel-header">
+        <span class="panel-title">Buy</span>
+        <button type="button" class="btn-close" aria-label="Close" @onclick="Hide"></button>
+    </div>
+    <div class="panel-content">
+        @if (ViewMode == ViewModeOption.Draft || ViewMode == ViewModeOption.Buying)
+        {
+            <div>
+                <label class="form-label">Collection</label>
+                <InputSelect TValue="Guid?" @bind-Value="SelectedPuzzleCollectionId" class="form-control form-select">
+                    <option value="">Select Collection</option>
+                    @foreach (var collection in PuzzleCollections)
+                    {
+                        <option value="@collection.Id">@collection.Title</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <label class="form-label">Puzzle Size</label>
+                    <div class="btn-group" role="group">
+                        <InputRadioGroup @bind-Value="PuzzleSize">
+                            @foreach (var puzzleSize in (SelectedPuzzleCollection?.PermittedPuzzleSize ?? new ReadOnlyCollection<int>(new List<int>())))
+                            {
+                                @GetRadioButtonPuzzleSizeOption(puzzleSize);
+                            }
+                        </InputRadioGroup>
+                    </div>
+
+                </div>
+
+                <div class="col buy-quantity">
+                    <label class="form-label">Quantity</label>
+                    <InputNumber class="form-control quantity" min="1" @bind-Value="Quantity"></InputNumber>
+                </div>
+            </div>
+        }
+
+        @if ((ViewMode == ViewModeOption.Draft || ViewMode == ViewModeOption.Buying) && LeftoverPuzzlePieces.Count > 0)
+        {
+            <div>
+                <div class="form-check buy-trade-in">
+                    <input class="form-check-input" type="checkbox" id="trade-in-pieces" @bind-value="ShowTradeInPieces">
+                    <label class="form-check-label" for="trade-in-pieces">
+                        Trade-in Pieces
+                    </label>
+                </div>
+                @if (ShowTradeInPieces)
+                {
+                    <div class="trade-in-puzzle-pieces">
+                        @foreach (var puzzlePiece in LeftoverPuzzlePieces)
+                        {
+                            <PuzzlePiece PuzzlePieceItem="puzzlePiece"
+                                ImageUrl="@puzzlePiece.ImageUrl"
+                                Selected="TradeInPuzzlePieces.Any(x => x == puzzlePiece)"
+                                OnPuzzlePieceClicked="() => SelectTradeInPuzzlePiece(puzzlePiece)">
+                            </PuzzlePiece>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @if (ViewMode == ViewModeOption.Draft || ViewMode == ViewModeOption.Buying || ViewMode == ViewModeOption.Bought)
+        {
+            <div>
+                <label class="form-label">Purchase Details</label>
+                <div class="buy-price-details">
+
+                    <div>
+                        <label>Price:</label>
+                        <label class="value">
+                            <span>@BuyPrice ADA</span>
+                            @if (OriginalPrice != BuyPrice)
+                            {
+                                <span class="original-price" style="">@OriginalPrice ADA</span>
+                            }
+                        </label>
+                    </div>
+                    <div>
+                        <label>Transaction Fees:</label>
+                        <label class="value">@(TransactionFees == 0 ? "TBD" : $"{TransactionFees} ADA")</label>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (ViewMode == ViewModeOption.Draft || ViewMode == ViewModeOption.Buying)
+        {
+            <button class="btn btn-dark buy-btn" @onclick="BuyPieces" style="cursor: @(BusyBuying ? "default" : "pointer")"
+                    disabled="@(BuyStatus != BuyStatusOption.Ready)">
+                @if (BusyBuying)
+                {
+                    <span class="spinner-border spinner-border-sm"></span>
+                }
+                <span>@BuyButtonDisplay</span>
+            </button>
+            
+            @if (ViewMode == ViewModeOption.Buying && ActiveOrderNumberOfConfirmations != null)
+            {
+                <div>
+                    @ActiveOrderNumberOfConfirmations confirmations
+                </div>    
+            }
+        }
+
+        @if (ViewMode == ViewModeOption.Bought)
+        {
+            <div>
+                <label class="form-label">Purchased Puzzle Pieces</label>
+                <div class="bought-puzzle-pieces">
+                    @foreach (var puzzlePiece in BoughtPuzzlePieces)
+                    {
+                        <PuzzlePiece
+                            PuzzlePieceItem="puzzlePiece"
+                            ImageUrl="@puzzlePiece.ImageUrl"
+                            OnPuzzlePieceClicked="() => BoughtPuzzlePieceClicked(puzzlePiece)">
+                        </PuzzlePiece>
+                    }
+                </div>
+            </div>
+
+            <button class="btn btn-dark buy-more-btn" @onclick="BuyMore">
+                <span>Buy More</span>
+            </button>
+        }
+
+    </div>
+</div>
+
+@code
+{
+    private RenderFragment GetRadioButtonPuzzleSizeOption(int puzzleSize)
+    {
+        return @<span>
+                   <InputRadio Value="@puzzleSize" class="btn-check" id="@(puzzleSize + "-pieces-radio")"/>
+                   <label class="btn btn-outline-dark puzzle-size-label" for="@(puzzleSize + "-pieces-radio")"><b>@puzzleSize</b>Pieces</label>
+               </span>;
+    }
+}

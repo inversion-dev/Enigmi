@@ -1,0 +1,43 @@
+﻿.puzzle-piece {
+    position: relative;
+
+    .selection-layer,
+    .find-piece,
+    .icon-layer,
+    .image-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+
+    .icon-layer {
+        width: 40px;
+        position: absolute;
+        right: 12px;
+        left: inherit;
+
+        img {
+            width: 100%;
+        }
+    }
+
+    .grayscale {
+        filter: grayscale(1);
+    }
+
+    .find-piece {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .image-layer {
+        background-size: contain;
+    }
+
+    .selection-layer {
+        border: 4px dashed silver;
+    }
+}

@@ -1,0 +1,10 @@
+{		
+	"Title": "Monsters",
+	"Description": "Range of puzzles containing different monsters",
+	"CoverImageBlobPath": "",	
+	"PuzzleNames":["Fluffy Monster"],
+	"PuzzlePiecePriceInAda" : 1,
+	"PuzzlePieceTradeInValueInAda": 0.5,
+	"PuzzlePolicyClosingUtcDate" : "2031-01-01",
+	"PuzzlePiecePolicyClosingUtcDate" : "2030-01-01"
+}

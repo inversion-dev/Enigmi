@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Messaging.EventGrid" Version="4.12.0" />
+    <PackageReference Include="FluentValidation" Version="11.3.0" />
+    <PackageReference Include="MediatR" Version="11.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Orleans.Reminders" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Orleans.Server" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Orleans.Streaming" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Orleans.Streaming.EventHubs" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Enigmi.Common\Enigmi.Common.csproj" />
+    <ProjectReference Include="..\Enigmi.Grains.Shared\Enigmi.Grains.Shared.csproj" />
+    <ProjectReference Include="..\Enigmi.Infrastructure\Enigmi.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

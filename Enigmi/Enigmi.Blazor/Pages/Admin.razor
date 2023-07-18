@@ -1,0 +1,61 @@
+﻿@page "/admin"
+
+@using Enigmi.Blazor.Utils
+@using Enigmi.Messages.System
+@inject ApiClient Api
+
+<PageTitle>Admin</PageTitle>
+
+<h1>Admin</h1>
+
+<form>
+
+<div class="form-group">
+    <label>Action</label>
+    <input type="text" class="form-control" @bind="Action" aria-label="Action" aria-describedby="basic-addon1">
+</div>
+
+<div class="form-group">
+    <label>Additional Data</label>
+    <input type="text" class="form-control" @bind="AdditionData" aria-label="Action" aria-describedby="basic-addon1">
+</div>
+<br/>
+<button class="btn btn-primary" disabled="@IsProcessing" @onclick="SendAction">Run</button>
+<br/>
+<div>
+    <br />
+    @ServerMessage
+</div>
+
+</form>
+
+@code {
+
+    public bool IsProcessing { get; set; }
+    public string? Action { get; set; } = "ProcessPuzzleCollection";
+    public string? AdditionData { get; set; } = "/drops/Collections/GreenMonsters";
+    public string? ServerMessage { get; set; }
+
+    async void SendAction()
+    {
+        try
+        {
+            IsProcessing = true;
+            StateHasChanged();
+            if (string.IsNullOrEmpty(Action))
+            {
+                return;
+            }
+
+            var response = await Api.SendAsync(new RunAdminActionCommand(Action, AdditionData));
+            ServerMessage = response?.Message;
+            
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+
+        StateHasChanged();
+    }
+}

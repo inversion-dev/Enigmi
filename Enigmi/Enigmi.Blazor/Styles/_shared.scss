@@ -1,0 +1,27 @@
+﻿.panel {
+    background: rgb(255, 255, 255);
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+    padding: 8px;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 6px;
+    height: 46px;
+}
+
+.panel-title {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.fade-in {
+    opacity: 1 !important;
+    transition: opacity 1.5s ease-in !important;
+}
+
+.fade-out {
+    opacity: 0 !important;
+    transition: opacity 1.5s ease-out !important;
+}

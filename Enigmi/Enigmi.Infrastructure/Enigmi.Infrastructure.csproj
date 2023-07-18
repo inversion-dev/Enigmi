@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.8.0" />
+    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.4.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.14.0" />
+    <PackageReference Include="CardanoSharp.Blockfrost.Sdk" Version="0.0.8" />
+    <PackageReference Include="Foundatio" Version="10.5.0" />
+    <PackageReference Include="MailKit" Version="3.4.2" />
+    <PackageReference Include="MediatR" Version="11.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Azure.SignalR.Management" Version="1.19.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.21.0" />
+    <PackageReference Include="MimeKit" Version="3.4.2" />
+    <PackageReference Include="NPOI" Version="2.5.6" />
+    <PackageReference Include="Polly" Version="7.2.3" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.3" />
+    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.21.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Enigmi.Common\Enigmi.Common.csproj" />
+    <ProjectReference Include="..\Enigmi.Domain\Enigmi.Domain.csproj" />
+    <ProjectReference Include="..\Enigmi.Messages\Enigmi.Messages.csproj" />
+    <ProjectReference Include="..\Esendex.TokenBucket\Esendex.TokenBucket.csproj" />
+  </ItemGroup>
+
+</Project>

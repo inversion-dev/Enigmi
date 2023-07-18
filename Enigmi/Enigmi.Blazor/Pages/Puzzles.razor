@@ -1,0 +1,27 @@
+﻿@page "/"
+@using Enigmi.Blazor.Components.Menu
+@using Enigmi.Blazor.Components.BuyPuzzlePiece
+@using Enigmi.Blazor.Components.ViewLeftoverPuzzlePieces
+@using Enigmi.Blazor.Components.PuzzleScrollBar;
+@using Enigmi.Blazor.Components.Puzzle
+
+@if (this.AuthenticationClient.IsAuthenticated)
+{
+    <div class="puzzles-page">
+        <div class="page-header">
+            <!-- todo: remove -->
+            <Menu UserName="Fred"/>
+        </div>
+
+        <div class="page-content">
+            <BuyPuzzlePiece Visible="IsBuyPuzzlePieceVisible"/>
+            <PuzzleScrollBar UserPuzzles="UserPuzzles"></PuzzleScrollBar>
+            <Puzzle Visible="ViewPuzzlePiecesVisible" UserPuzzles="UserPuzzles"/>
+            <ViewLeftoverPuzzlePieces Visible="ViewLeftoverPuzzlePiecesVisible" LeftoverPuzzles="LeftoverPuzzles"/>
+        </div>
+    </div>
+}
+
+
+
+

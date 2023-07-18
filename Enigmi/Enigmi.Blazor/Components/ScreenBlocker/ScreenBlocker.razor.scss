@@ -1,0 +1,37 @@
+﻿.screen-blocker {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9900; //below notifications, above everything else
+    background-color: rgba(0, 0, 0, 0.7);
+
+    div {
+        width: 400px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        
+        padding: 20px;
+        border-radius: 20px;
+        margin: 0;
+        color: #ffffff;
+        position: absolute;
+        text-align: center;
+
+        @extend .noselect;
+    }
+}
+
+
+.noselect {
+    //Source: https://stackoverflow.com/questions/826782/how-to-disable-text-selection-highlighting
+
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}

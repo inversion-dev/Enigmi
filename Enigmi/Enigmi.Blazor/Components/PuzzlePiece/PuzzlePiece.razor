@@ -1,0 +1,28 @@
+﻿<div class="puzzle-piece" @onclick="PuzzlePieceClicked">
+    @if (ImageUrl != null)
+    {
+        <div class="image-layer @(IsOwned ? "":"not-owned")" style="background-image: url('@ImageUrl')"></div>
+    }
+
+    @if (Selected)
+    {
+        <div class="selection-layer"></div>
+    }
+        
+    <div class="icon-layer">
+        <img class="@(ShowDuplicateIcon ? "":"grayscale")" src="images/duplicates.svg">
+    </div>
+    
+
+    @if (!IsOwned && EnableFindPiece)
+    {
+        <div class="find-piece">
+            <ActionButton CustomCss="btn-outline-dark" Enabled="PuzzlePieceItem.AvailablePuzzlePieceCount > 0" ClickAction="FindPiece">
+                Find Piece
+                <br>
+                @PuzzlePieceItem.AvailablePuzzlePieceCount Available
+            </ActionButton>
+        </div>
+    }
+
+</div>

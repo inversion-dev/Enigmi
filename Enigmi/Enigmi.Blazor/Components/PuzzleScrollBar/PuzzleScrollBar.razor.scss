@@ -1,0 +1,27 @@
+﻿.view-puzzle-pieces {
+    &.mini-map-list {
+        width: 203px;
+        height: calc(100vh - 90px);
+        overflow-y: auto;
+
+        .puzzle-container {
+            .puzzle {
+                &.active {
+                    box-shadow: rgb(210 39 58) 0px 0px 0px 3px;
+                }
+
+                cursor: pointer;
+            }
+
+            .puzzle-pieces {
+                width: 180px;
+                height: 180px;
+
+                .icon-layer {
+                    width: 12px;
+                    right: 3px;
+                }
+            }
+        }
+    }
+}

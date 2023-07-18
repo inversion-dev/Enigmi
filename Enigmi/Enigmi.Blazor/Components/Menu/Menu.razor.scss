@@ -1,0 +1,18 @@
+﻿.menu {
+    display: flex;
+    align-content: stretch;
+    justify-content: space-between;
+    align-items: center;
+    gap: 55px;
+
+    .logo {
+        height: 50px;
+    }
+
+    .buttons {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        align-items: stretch;
+    }
+}

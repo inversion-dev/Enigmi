@@ -1,0 +1,9 @@
+﻿<button type="button"
+        @onclick="ClickAction"
+        disabled="@(!Enabled)"
+    class="btn btn-outline-dark icon-button"
+    data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom"
+    style="@LayoutStyle">
+    <img src="@IconUrl">
+    <span style="@TextStyle">@Text</span>
+</button>
