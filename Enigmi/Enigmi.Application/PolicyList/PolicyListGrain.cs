@@ -39,7 +39,7 @@ public class PolicyListGrain : GrainBase<Domain.Entities.PolicyListAggregate.Pol
 
         if (State.DomainAggregate == null)
         {
-            State.DomainAggregate = new Domain.Entities.PolicyListAggregate.PolicyList(0);
+            State.DomainAggregate = new Domain.Entities.PolicyListAggregate.PolicyList(Constants.SingletonGrain);
             await WriteStateAsync();
         }
 
@@ -103,15 +103,15 @@ public class PolicyListGrain : GrainBase<Domain.Entities.PolicyListAggregate.Pol
         return new Constants.Unit().ToSuccessResponse();
     }
 
-    public override string ResolveSubscriptionName(DomainEvent @event)
+    public override IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event)
     {
         @event.ThrowIfNull();
         State.DomainAggregate.ThrowIfNull();
 
         var subscriptionName = @event switch
         {
-            PolicyAdded policyAddedEvent => State.DomainAggregate.Policies.Single(x => x.PolicyId == policyAddedEvent.PolicyId).PuzzleCollectionId.ToString(),
-            _ => string.Empty
+            PolicyAdded policyAddedEvent => State.DomainAggregate.Policies.Single(x => x.PolicyId == policyAddedEvent.PolicyId).PuzzleCollectionId.ToString().ToSingletonList(),
+            _ => string.Empty.ToSingletonList()
         };
         
         return subscriptionName;

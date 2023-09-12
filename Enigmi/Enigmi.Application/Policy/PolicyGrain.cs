@@ -25,16 +25,17 @@ public class PolicyGrain : GrainBase<Domain.Entities.PolicyAggregate.Policy>, IP
         await base.OnActivateAsync(cancellationToken);
     }
 
-    public override string ResolveSubscriptionName(DomainEvent @event)
+    public override IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event)
     {
         @event.ThrowIfNull();
 
-        var subscriptionName = @event switch
+        var subscriptionNames = @event switch
         {
-            PolicyCreated => Constants.PolicyCollectionGrainSubscription,
-            _ => string.Empty
+            PolicyCreated => Constants.PolicyCollectionGrainSubscription.ToSingletonList(),
+            _ => string.Empty.ToSingletonList()
         };
-        return subscriptionName;
+        
+        return subscriptionNames;
     }
 
     public async Task<ResultOrError<Constants.Unit>> CreatePolicy(string policyId, string mnemonicWords, uint policyClosingSlot, DateTime policyClosingUtcDate)

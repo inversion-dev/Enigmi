@@ -19,7 +19,7 @@ public class GetPuzzleCollectionsRequestHandler : Handler<GetPuzzleCollectionsRe
     public override async Task<ResultOrError<GetPuzzleCollectionsResponse>> Execute(GetPuzzleCollectionsRequest request, CancellationToken cancellationToken)
     {
         request.ThrowIfNull();
-        var puzzleCollectionSnifferGrain = ClusterClient.GetGrain<IPuzzleCollectionListGrain>(0);
+        var puzzleCollectionSnifferGrain = ClusterClient.GetGrain<IPuzzleCollectionListGrain>(Constants.SingletonGrain);
         var response = await puzzleCollectionSnifferGrain.GetPuzzleCollections(new Enigmi.Grains.Shared.PuzzleCollectionList.Messages.GetPuzzleCollectionsRequest());
 
         return response.Transform(o => new GetPuzzleCollectionsResponse(o.PuzzleCollections.Select(x =>

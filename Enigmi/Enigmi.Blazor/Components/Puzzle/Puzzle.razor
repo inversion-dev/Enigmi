@@ -1,77 +1,82 @@
 ﻿@using Enigmi.Blazor.Components.PuzzlePiece;
+@using Enigmi.Blazor.Components.PuzzleScrollBar
 
 @if (!Visible || !PuzzleSelectionManager.SelectedPuzzleDefinitionId.HasValue)
 {
     return;
 }
 
-@{
-    var puzzle = UserPuzzles.SingleOrDefault(x => x.PuzzleId == PuzzleSelectionManager.SelectedPuzzleDefinitionId);
-    if (puzzle == null)
-    {
-        return;
-    }
-}
-
-
-<div class="view-puzzle-pieces" @onmousewheel="MouseWheelEventHandler" @onwheel="MouseWheelEventHandler">
-    
-
-    <div class="puzzle-container">
-        <div class="puzzle-info-header">
-            <span>@puzzle.PuzzleTitle</span>
-            <span class="puzzle-info-header-buttons">
-                <span>@(puzzle.NumberOfAllowedBuilds - puzzle.NumberOfCompletedBuilds) of @puzzle.NumberOfAllowedBuilds</span>
-                <i class="bi bi-info-circle"></i>
-            </span>
-        </div>
-        <div class="puzzle puzzle-@puzzle.PuzzleSize">
-            <div class="puzzle-pieces">
-                @foreach (var puzzlePiece in puzzle.PuzzlePieces)
-                {
-                    <PuzzlePiece ImageUrl="@puzzlePiece.PuzzlePiece?.ImageUrl"
-                                 PuzzlePieceItem=puzzlePiece.PuzzlePiece
-                                 Selected="SelectedPuzzlePieceId == puzzlePiece.PuzzlePieceDefinitionId"
-                                 ShowDuplicateIcon="puzzlePiece.OwnedCount > 1"
-                                 ShowOfferIcon="false"    
-                                 EnableFindPiece="true"
-                                 IsOwned="puzzlePiece.PuzzlePiece?.IsOwned ?? false"/>
-                }
-            </div>
-
-            <div class="info-overlay">
-                <h5>Puzzle Information</h5>
-                <div class="info-item-container">
-                    <div class="info-item">
-                        <label class="info-label">
-                            Puzzle Name
-                        </label>
-                        <div class="info-value">
-                            @puzzle.PuzzleTitle
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <label class="info-label">
-                            Puzzle Collection
-                        </label>
-                        <div class="info-value">
-                            @puzzle.CollectionTitle
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <label class="info-label">
-                            Available Puzzle Builds
-                        </label>
-                        <div class="info-value">
-                            @($"{puzzle.NumberOfAllowedBuilds - puzzle.NumberOfCompletedBuilds} left out of ${puzzle.NumberOfAllowedBuilds}");
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <button class="btn btn-xs btn-dark info-button" @onclick="() => BuildPuzzle(puzzle.PuzzleId)">Build Puzzle</button>
-                    </div>
-                </div>
-            </div>
+<div>
+    <div class="puzzle-scrollbar-outer-container">
+        <div class="puzzle-scrollbar-inner-container">
+            <PuzzleScrollBar UserPuzzles="UserPuzzles"></PuzzleScrollBar>
         </div>
     </div>
 
+    <div class="view-puzzle-pieces main-puzzle" @onmousewheel="MouseWheelEventHandler" @onwheel="MouseWheelEventHandler">
+
+        @{
+            foreach (var puzzle in UserPuzzles)
+            {
+                <div class="puzzle-container height-animitation-transition @(puzzle.PuzzleId == PuzzleSelectionManager.SelectedPuzzleDefinitionId ? "" : "hidden")" style="top: @(PuzzleSelectionManager.Index * - 676)px">
+                    <div class="puzzle-info-header">
+                        <span>@puzzle.PuzzleTitle</span>
+                        <span class="puzzle-info-header-buttons">
+                            <span>@(puzzle.NumberOfAllowedBuilds - puzzle.NumberOfCompletedBuilds) of @puzzle.NumberOfAllowedBuilds</span>
+                            <i class="bi bi-info-circle"></i>
+                        </span>
+                    </div>
+                    <div class="puzzle puzzle-@puzzle.PuzzleSize">
+                        <div class="puzzle-pieces">
+                            @foreach (var puzzlePiece in puzzle.PuzzlePieces)
+                            {
+                                <PuzzlePiece ImageUrl="@puzzlePiece.PuzzlePiece?.ImageUrl"
+                                 PuzzlePieceItem=puzzlePiece.PuzzlePiece
+                                 Selected="SelectedPuzzlePieceId == puzzlePiece.PuzzlePieceDefinitionId"
+                                 OwnedPuzzlePieceCount="puzzlePiece.OwnedCount"
+                                 ShowOfferIcon="false"
+                                 EnableFindPiece="true"
+                                 ShowColour="puzzlePiece.PuzzlePiece?.IsOwned ?? false" />
+                            }
+                        </div>
+
+                        <div class="info-overlay">
+                            <h5>Puzzle Information</h5>
+                            <div class="info-item-container">
+                                <div class="info-item">
+                                    <label class="info-label">
+                                        Puzzle Name
+                                    </label>
+                                    <div class="info-value">
+                                        @puzzle.PuzzleTitle
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <label class="info-label">
+                                        Puzzle Collection
+                                    </label>
+                                    <div class="info-value">
+                                        @puzzle.CollectionTitle
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <label class="info-label">
+                                        Available Puzzle Builds
+                                    </label>
+                                    <div class="info-value">
+                                        @($"{puzzle.NumberOfAllowedBuilds - puzzle.NumberOfCompletedBuilds} left out of ${puzzle.NumberOfAllowedBuilds}");
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <button class="btn btn-xs btn-dark info-button" @onclick="() => BuildPuzzle(puzzle.PuzzleId)">Build Puzzle</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+
+    </div>
 </div>

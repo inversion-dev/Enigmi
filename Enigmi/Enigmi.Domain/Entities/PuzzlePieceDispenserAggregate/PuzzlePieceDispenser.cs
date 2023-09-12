@@ -74,22 +74,23 @@ public class PuzzlePieceDispenser : DomainEntity
 		_availablePuzzlePieceIds.Add(puzzlePieceId);
 	}
 
-	public IEnumerable<string> ReserveRandomPuzzlePieces(Guid reservationId, int count)
+	public IEnumerable<string> ReservePuzzlePieces(Guid reservationId, List<string> puzzlePieceIdsToReserve)
 	{
-		count.ThrowIf(x => x < 0, "Count must be larger than 0");
+		puzzlePieceIdsToReserve.ThrowIfNull();
 		reservationId.ThrowIfEmpty();
 		
-		var reservedPuzzlePieceIds = _reservations.SelectMany(x => x.PuzzlePieceIds).ToList();
-		var puzzlePieceIdsToReserve = _availablePuzzlePieceIds.Except(reservedPuzzlePieceIds)
-			.OrderBy(o => Guid.NewGuid())
-			.Take(count)
-			.ToList();
-
 		AddReservation(reservationId, puzzlePieceIdsToReserve);
 
 		//TODO: what if too little reservation available. Thought here is that one returns as many as possible and let the user know.
 		return puzzlePieceIdsToReserve;
 	}
+
+	public IEnumerable<string> GetPuzzlePieceIdsAvailableForReservation()
+	{
+		var reservedPuzzlePieceIds = _reservations.SelectMany(x => x.PuzzlePieceIds).ToList();
+		return _availablePuzzlePieceIds.Except(reservedPuzzlePieceIds).ToList();
+	}
+	
 
 	private Reservation AddReservation(Guid reservationId, IEnumerable<string> reservations)
 	{

@@ -24,6 +24,12 @@ html, body {
 @import '../Components/PuzzleScrollBar/PuzzleScrollBar.razor.scss';
 @import '../Components/ViewLeftoverPuzzlePieces/ViewLeftoverPuzzlePieces.razor.scss';
 @import '../Components/ScreenBlocker/ScreenBlocker.razor.scss';
+@import '../Components/TradeQuad/TradeQuad.razor.scss';
+@import '../Components/PotentialTradeList/PotentialTradeList.razor.scss';
+@import '../Components/OfferList/OfferList.razor.scss';
+@import '../Components/Tooltip/Tooltip.razor.scss';
+@import '../Components/TradeLists/TradeLists.razor.scss';
+@import '../Components/TradeView/TradeView.razor.scss';
 
 #blazor-error-ui {
     background: lightyellow;
@@ -58,4 +64,14 @@ html, body {
     display: flex;
     justify-content: flex-end;
     border-top: none;
+}
+
+w-100
+{
+    width:100%;
+}
+
+.center-text
+{
+    text-align: center
 }

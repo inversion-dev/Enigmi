@@ -14,8 +14,8 @@
                     {
                         <PuzzlePiece ImageUrl="@puzzlePiece.PuzzlePiece?.ImageUrl"
                              PuzzlePieceItem="puzzlePiece.PuzzlePiece"   
-                             ShowDuplicateIcon="puzzlePiece.OwnedCount > 1"
-                             IsOwned="puzzlePiece.PuzzlePiece?.IsOwned ?? false" />
+                             OwnedPuzzlePieceCount="puzzlePiece.OwnedCount"
+                             ShowColour="puzzlePiece.PuzzlePiece?.IsOwned ?? false" />
                     }
                 </div>
             </div>

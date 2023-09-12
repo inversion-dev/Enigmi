@@ -20,9 +20,9 @@ public class SystemWalletGrain : GrainBase<Domain.Entities.SystemWalletAggregate
         await base.OnActivateAsync(cancellationToken);
     }
 
-    public override string ResolveSubscriptionName(DomainEvent @event)
+    public override IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event)
     {
-        return String.Empty;
+        return String.Empty.ToSingletonList();
     }
 
     public ValueTask<string> GetHumanFriendlyAddress()

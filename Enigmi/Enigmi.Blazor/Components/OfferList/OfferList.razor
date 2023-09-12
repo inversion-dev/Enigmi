@@ -1,0 +1,36 @@
+﻿@using Enigmi.Blazor.Components.TradeQuad
+@using Enigmi.Blazor.Components.Spinner;
+
+<div class="active-trade-list">
+
+    @if (IsLoading)
+    {
+        <Spinner IsLoading="IsLoading"></Spinner>
+    }
+    else if (Trades != null)
+    {
+        if (Trades.Count == 0)
+        {
+            <div class="center-text">No offers found</div>
+        }
+
+        @foreach (var trade in Trades)
+        {
+            var party = GetParty(Shared.Models.TradePartyType.Counterparty, trade.TradeDetails);
+            var disable = OfflineStakingAddresses.Contains(party.StakingAddress);
+            <div class="@(disable ? "disabled" : "")" @onclick="() => ViewTrade(trade)">
+                @{
+                    var timeLeft = ActiveTradesManager.TimeLeft(trade);
+                    var countdownValue = timeLeft != null && this.ViewMode == Shared.Models.ViewMode.OffersMade ? Convert.ToInt32(timeLeft.Value.TotalSeconds) : 0;
+                }                
+                @if (disable)
+                {
+                    <div class="disabled-overlay-message">
+                        Trade canceled by counterparty going offline
+                    </div>
+                }
+                <TradeQuad CountdownValue="countdownValue" TradeDetail="trade.TradeDetails" UserPuzzles="Puzzles" />
+            </div>
+        }
+    }
+</div>

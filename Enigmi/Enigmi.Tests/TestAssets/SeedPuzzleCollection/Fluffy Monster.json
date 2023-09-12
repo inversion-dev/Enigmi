@@ -1,9 +1,8 @@
 {
-"PolicyId": "086849cd9f672e731e0d9590a2d28a6a690ffa2f73bae0e1970f0491",
 "PuzzleSize" : 4,
 "NumberOfAllowedBuilds" : 1,
 "NumberOfCompletedBuilds" : 0,
 "BlockchainMetadataJson" : "{\"size\": \"4\",  \"name\": \"Fluffy Monster\",  \"version\": \"1.0\"}",
 "Title":"Fluffy Monster",
-"NumberOfPuzzlePiecesTarget" : 4
+"NumberOfPuzzlePiecesTarget" : 5
 }

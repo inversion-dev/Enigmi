@@ -2,4 +2,4 @@
 
 namespace Enigmi.Domain.Entities.BlockchainTransactionSubmissionAggregate.Events;
 
-public record BlockchainTransactionFailed(BlockchainTransactionProcessState State) : DomainEvent;
+public record BlockchainTransactionFailed(BlockchainTransactionProcessState State, bool IsDoubleSpent) : DomainEvent;

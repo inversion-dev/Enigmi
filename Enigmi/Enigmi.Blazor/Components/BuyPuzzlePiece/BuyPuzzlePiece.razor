@@ -2,7 +2,10 @@
 @using Enigmi.Blazor.Components.PuzzlePiece
 @using System.Collections.ObjectModel
 
-@if (!Visible) return;
+@if (!Visible)
+{
+    return;
+}
 
 <div class="panel buy-puzzle-piece">
     <div class="panel-header">
@@ -122,6 +125,7 @@
                         <PuzzlePiece
                             PuzzlePieceItem="puzzlePiece"
                             ImageUrl="@puzzlePiece.ImageUrl"
+                            ShowIconLayer="false"
                             OnPuzzlePieceClicked="() => BoughtPuzzlePieceClicked(puzzlePiece)">
                         </PuzzlePiece>
                     }

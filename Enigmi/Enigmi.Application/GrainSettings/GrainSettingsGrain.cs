@@ -24,7 +24,13 @@ public class GrainSettingsGrain : Grain<DomainGrainState<Domain.Entities.GrainSe
     public async Task<ResultOrError<Constants.Unit>> UpdateSettings(Domain.Entities.GrainSettings.Settings updatedSettings)
     {
         State.DomainAggregate.ThrowIfNull();
-        State.DomainAggregate.UpdateSettings(updatedSettings);
+        var updateSettingResponse = State.DomainAggregate.UpdateSettings(updatedSettings);
+
+        if (updateSettingResponse.HasErrors)
+        {
+            return updateSettingResponse.Errors.ToFailedResponse<Constants.Unit>();
+        }
+        
         await WriteStateAsync();
 
         return new Constants.Unit().ToSuccessResponse();

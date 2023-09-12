@@ -1,6 +1,6 @@
 ﻿namespace Enigmi.Grains.Shared.ActivePuzzlePieceList.Messages;
 
-public record UpdateActivePuzzlePiecesCommand(string StakingAddress, List<UpdateActivePuzzlePiecesCommand.PuzzlePiece> PuzzlePieces)
+public record UpdateActivePuzzlePiecesCommand(string StakingAddress, string Nickname, List<UpdateActivePuzzlePiecesCommand.PuzzlePiece> PuzzlePieces)
 {
     public record PuzzlePiece(
         string PuzzlePieceId,

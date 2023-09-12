@@ -21,13 +21,19 @@ builder.Services.AddScoped<ClientAppSettings>();
 builder.Services.AddScoped<SignalRClient>();
 builder.Services.AddScoped<TabVisibilityHandler>();
 builder.Services.AddScoped<PuzzleSelectionManager>();
+builder.Services.AddScoped<ActiveTradesManager>();
 
 builder.Services.AddScoped<OnShowBuyPuzzlePieceSectionRequestedEvent>();
 builder.Services.AddScoped<OnHideBuyPuzzlePieceSectionRequestedEvent>();
 
 builder.Services.AddScoped<OnUserWalletStateRefreshedEvent>();
+builder.Services.AddScoped<OnNicknameUpdatedEvent>();
+
 builder.Services.AddScoped<OnUserWalletStateReceivedEvent>();
 builder.Services.AddScoped<ActivePuzzlePieceUpdatedEvent>();
+builder.Services.AddScoped<OnRequestPotentialTradeListEvent>();
+builder.Services.AddScoped<OnRequestOfferMadeListEvent>();
+builder.Services.AddScoped<OnTradeViewRequestedEvent>();
 
 builder.Services.AddScoped<OnShowScreenBlockerEvent>();
 builder.Services.AddScoped<OnUnblockScreenRequestedEvent>();

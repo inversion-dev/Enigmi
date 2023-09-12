@@ -21,7 +21,7 @@ public class SettingsTests : OrleansTestBase
     [Fact]
     public async Task ShouldSucceedWhenSettingWalletRoundTripPingInterval()
     {
-        var settingsGrain = ClusterClient.GetGrain<IGrainSettingsGrain>(0);
+        var settingsGrain = ClusterClient.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
         var settings = await settingsGrain.GetSettings();
         settings.UserWalletRoundTripPingInterval = TimeSpan.FromMinutes(2);
         await settingsGrain.UpdateSettings(settings);

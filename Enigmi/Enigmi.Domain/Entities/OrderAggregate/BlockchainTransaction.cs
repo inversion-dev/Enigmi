@@ -1,12 +1,10 @@
-﻿using System.Text;
-using CardanoSharp.Wallet;
+﻿using CardanoSharp.Wallet;
 using CardanoSharp.Wallet.CIPs.CIP2;
 using CardanoSharp.Wallet.Enums;
 using CardanoSharp.Wallet.Extensions;
 using CardanoSharp.Wallet.Extensions.Models;
 using CardanoSharp.Wallet.Extensions.Models.Transactions;
 using CardanoSharp.Wallet.Extensions.Models.Transactions.TransactionWitnesses;
-using CardanoSharp.Wallet.Models;
 using CardanoSharp.Wallet.Models.Addresses;
 using CardanoSharp.Wallet.Models.Keys;
 using CardanoSharp.Wallet.Models.Transactions;
@@ -18,11 +16,11 @@ using Enigmi.Common;
 using Enigmi.Common.Messaging;
 using Enigmi.Common.Utils;
 using Enigmi.Domain.Entities.OrderAggregate.ValueObjects;
+using Enigmi.Domain.Utils;
 using Enigmi.Domain.ValueObjects;
 using Newtonsoft.Json;
 using PeterO.Cbor2;
 using ApplicationException = Enigmi.Common.Exceptions.ApplicationException;
-using Utxo = CardanoSharp.Wallet.Models.Utxo;
 
 namespace Enigmi.Domain.Entities.OrderAggregate;
 
@@ -83,7 +81,7 @@ public class BlockchainTransaction
 			.SetFee(0)
 			.SetTtl(Convert.ToUInt32(transactionTtl));
 
-		var allWalletUtxos = ConvertToCardanoSharpUtxos(userWalletAvailableAssets);
+		var allWalletUtxos = UtxoUtility.ConvertToCardanoSharpUtxos(userWalletAvailableAssets);
 
 		ITokenBundleBuilder tokenBundleBuilder = TokenBundleBuilder.Create;
 		ITokenBundleBuilder changeBundleBuilder = TokenBundleBuilder.Create;
@@ -127,10 +125,12 @@ public class BlockchainTransaction
 		
 		UnsignedTransactionCborHex = Convert.ToHexString(transaction.Serialize());
 		TtlUtcTimestamp = latestSlotUtcTimestamp.AddSeconds(ttl);
-		TransactionId = GetTransactionId(transaction);
+		TransactionId = UtxoUtility.GetTransactionId(transaction);
 		
 		return new Enigmi.Constants.Unit().ToSuccessResponse();
 	}
+	
+	
 
 	private static IAuxiliaryDataBuilder BuildMetadataAndMintingTokens(List<OrderedPuzzlePiece> orderedPuzzlePieces,
 		IEnumerable<PuzzlePieceMetadataList.PuzzlePieceMetadata> puzzlePieceMetadataList, ITokenBundleBuilder tokenBundleBuilder, ITokenBundleBuilder changeBundleBuilder)
@@ -168,58 +168,6 @@ public class BlockchainTransaction
 		return witnessBuilder;
 	}
 
-	private List<Utxo> ConvertToCardanoSharpUtxos(IEnumerable<UtxoAsset> userWalletAvailableAssets)
-	{
-		var utxos = userWalletAvailableAssets
-			.GroupBy(x => (x.TxId, x.OutputIndexOnTx))
-			.ToDictionary(x => x.Key, x => x.ToList());
-
-		var allWalletUtxos = new List<Utxo>();
-		foreach (var item in utxos)
-		{
-			var adaAmount = item.Value.Where(x => x.BlockchainAssetId == Enigmi.Constants.LovelaceTokenAssetId)
-				.Select(x => x.Amount)
-				.SingleOrDefault();
-
-			var assets = item.Value.Where(x => x.BlockchainAssetId != Enigmi.Constants.LovelaceTokenAssetId).Select(x =>
-				new Asset
-				{
-					Name = Convert.ToHexString(ConvertAssetIdToPolicyIdAndAssetName(x.BlockchainAssetId).AssetName),
-					Quantity = (long)x.Amount,
-					PolicyId = Convert.ToHexString(ConvertAssetIdToPolicyIdAndAssetName(x.BlockchainAssetId).PolicyId).ToLowerInvariant()
-				}).ToList();
-
-			allWalletUtxos.Add(new Utxo
-			{
-				Balance = new Balance
-				{
-					Assets = assets,
-					Lovelaces = adaAmount
-				},
-				TxHash = item.Key.TxId,
-				TxIndex = item.Key.OutputIndexOnTx
-			});
-		}
-
-		return allWalletUtxos;
-	}
-
-	private static string GetTransactionId(Transaction transaction)
-	{
-		return Convert.ToHexString(HashUtility.Blake2b256(transaction.TransactionBody.GetCBOR(transaction.AuxiliaryData).EncodeToBytes()))
-			.ToLowerInvariant();
-	}
-
-	private (byte[] PolicyId, byte[] AssetName) ConvertAssetIdToPolicyIdAndAssetName(string assetId)
-	{
-		assetId.IsNullOrWhitespace();
-		
-		var policyId = Convert.FromHexString(assetId.Substring(0, 56));
-		var assetName = Convert.FromHexString(assetId.Substring(56));
-
-		return (policyId, assetName);
-	}
-	
 	private Transaction BuildTransactionWithFee(
 		ITransactionBodyBuilder transactionBodyBuilder,
 		CardanoNetworkParameters networkParams,

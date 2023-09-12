@@ -1,0 +1,96 @@
+﻿
+.trade-summary {
+    border: solid 1px gray;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    background-color: white;
+    display: inline-block;
+
+    .puzzle-piece {
+
+        &.highlight.owner-animate-from, &.highlight.counter-party-animate-from {
+            border: solid 1px red !important;
+        }
+
+        &.highlight.owner-animate-to, &.highlight.counter-party-animate-to {
+            border: solid 1px green !important;
+        }
+    }
+
+    .view-puzzle-pieces {
+
+        &.mini-map {
+            height: inherit;
+            font-size: 9px;
+
+            .puzzle-container {
+                display: inline-block;
+                vertical-align: top;
+                margin: 5px;
+                padding: 0px;
+
+                .puzzle .puzzle-pieces .puzzle-piece {
+                    border: none;
+                }
+            }
+        }
+
+        .puzzle-container {
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 8px;
+        }
+    }
+
+    .vertical-line-container {
+        display: inline-block;
+        width: 1px;
+        position: absolute;
+
+        hr {
+            transform: rotate(180deg);
+            height: 260px;
+            position: relative;
+            top: -16px;
+            left: 0px;
+            background-color: black;
+            z-index: 1;
+            opacity: 1;
+        }
+    }
+
+    .rating-container {
+        display: flex;
+        align-items: center;
+        color: black;
+        position: relative;
+        z-index: 2;
+        background-color: white;
+
+        span {
+            flex: 2;
+            text-align: center
+        }
+
+        div:not(.tooltip-wrapper) {
+            border: solid 1px black;
+            border-radius: 20px;
+            min-width: 37px;
+            padding: 5px 2px;
+            text-align: center
+        }
+    }
+
+    .circle-number.red-circle.circle-number-countdown {
+        position: relative;
+        top: 0;
+        right: 60px;
+        z-index: 3;
+    }
+}
+
+.animation-item {
+    position: absolute;
+    z-index: -1;
+    transition: left 1.35s !important;
+}

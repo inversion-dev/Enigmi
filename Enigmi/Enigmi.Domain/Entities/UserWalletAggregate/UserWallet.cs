@@ -8,11 +8,30 @@ namespace Enigmi.Domain.Entities.UserWalletAggregate;
 
 public class UserWallet : DomainEntity
 {
-	public Guid Id { get; private set; }
 	
-	public int? WalletHash { get; private set; }
+	public UserWallet(string id)	
+	{
+		Id = id.ThrowIfNullOrWhitespace();
+	}
+		
+	[JsonConstructor]
+	private UserWallet()	
+	{
+		
+	}
 
-	[JsonProperty] 
+	[JsonProperty]
+	public string Id { get; private set; } = null!;
+
+	public string StakingAddress => Id;
+
+	[JsonProperty]
+    public string Nickname { get; private set; } = string.Empty;
+    
+    [JsonProperty]
+    public string PaymentAddress { get; private set; } = string.Empty;
+
+    [JsonProperty] 
 	public OnlineState OnlineState { get; private set; } = OnlineState.Offline;
 	
 	[JsonProperty]
@@ -54,9 +73,11 @@ public class UserWallet : DomainEntity
 		ActiveOrderId = orderId;
 	}
 
-	public void UpdateWalletState(IEnumerable<UtxoAsset> utxoAssets)
+	public void UpdateWalletState(IEnumerable<UtxoAsset> utxoAssets, string paymentAddress)
 	{
+		paymentAddress.ThrowIfNullOrWhitespace();
 		_availableUtxoAssets = utxoAssets.ThrowIfNull().ToList();
+		PaymentAddress = paymentAddress;
 	}
 
 	public void GoOnline()
@@ -85,5 +106,10 @@ public class UserWallet : DomainEntity
 		{
 			_utxoReservations.Remove(reservation);
 		}
-	}	
+	}
+	
+	public void SetNickname(string nickname)
+	{
+		this.Nickname = nickname.ThrowIfNullOrWhitespace();
+	}
 }

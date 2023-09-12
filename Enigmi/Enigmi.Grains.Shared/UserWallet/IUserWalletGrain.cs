@@ -1,5 +1,5 @@
 ﻿using Enigmi.Common.Messaging;
-using Enigmi.Domain.Entities.UserWalletAggregate;
+using Enigmi.Domain.Entities.ActivePuzzlePieceListAggregate.ValueObjects;
 using Enigmi.Grains.Shared.UserWallet.Messages;
 using Orleans.Concurrency;
 
@@ -35,4 +35,8 @@ public interface IUserWalletGrain : IGrainWithStringKey
     Task<GetStateResponse?> GetActiveCompletedOrderPuzzlePieces(Guid orderId);
 
     Task UserWalletStateHasChanged();
+
+    Task<ResultOrError<MakeAnOfferResponse>> MakeAnOffer(MakeAnOfferCommand command);
+    
+    Task<ResultOrError<GetTradeResponse>> GetActiveTradeList(GetActiveTradeListRequest request);
 }

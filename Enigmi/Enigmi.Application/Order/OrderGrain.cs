@@ -7,6 +7,7 @@ using Enigmi.Domain.Entities.BlockchainTransactionSubmissionAggregate.Events;
 using Enigmi.Domain.Entities.OrderAggregate.Events;
 using Enigmi.Domain.Entities.OrderAggregate.ValueObjects;
 using Enigmi.Domain.Entities.PuzzlePieceAggregate;
+using Enigmi.Domain.Utils;
 using Enigmi.Grains.Shared.BlockchainTransactionSubmission;
 using Enigmi.Grains.Shared.GrainSettings;
 using Enigmi.Grains.Shared.Order;
@@ -96,10 +97,10 @@ public class OrderGrain : GrainBase<Domain.Entities.OrderAggregate.Order>, IOrde
             throw new Exception("Order has already been built");
         }
 
-        var settingsGrain = GrainFactory.GetGrain<IGrainSettingsGrain>(0);
+        var settingsGrain = GrainFactory.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
         var settings = await settingsGrain.GetSettings();
 
-        var systemAddress = await this.GrainFactory.GetGrain<ISystemWalletGrain>(0).GetHumanFriendlyAddress();
+        var systemAddress = await this.GrainFactory.GetGrain<ISystemWalletGrain>(Constants.SingletonGrain).GetHumanFriendlyAddress();
         State.DomainAggregate = new Domain.Entities.OrderAggregate.Order(this.GetGrainId().GetGuidKey(), settings.OrderGrain.OrderExpiresTimespan);
         var order = State.DomainAggregate;
 
@@ -125,17 +126,16 @@ public class OrderGrain : GrainBase<Domain.Entities.OrderAggregate.Order>, IOrde
 
             puzzlePiece.ThrowIfNull();
             var puzzleDefinitionGrain = GrainFactory.GetGrain<IPuzzleDefinitionGrain>(puzzlePiece.PuzzleDefinitionId);
-            var puzzleDefinitionDetail = await puzzleDefinitionGrain.GetPuzzleDefinition();
-            puzzleDefinitionDetail.ThrowIfNull();
+            var puzzleDefinition = await puzzleDefinitionGrain.GetPuzzleDefinition();
+            puzzleDefinition.ThrowIfNull();
 
             await CreatePuzzlePiecePlaceholderImage(puzzlePiece);
 
             var cborMetadata = CBORObject.FromObject(new
             {
-                metadata = CBORObject.FromJSONString(puzzleDefinitionDetail.BlockchainMetadataJson),
+                metadata = CBORObject.FromJSONString(puzzleDefinition.BlockchainMetadataJson),
                 name = Guid.NewGuid().ToString("N"),
-                //image = Invariant($"{Settings.BlobstorageConfig.BlobStorageHost}{BlobPathHelper.PrependBlobPathIfRequired(Settings, puzzlePieceDetail.BlobImagePath)}") // "https://tinyurl.com/45nu8533"
-                image = "https://tinyurl.com/yds3z7yb"
+                image = Invariant($"{this.Settings.BlobstorageConfig.CustomDomainRootUrl}{BlobPathHelper.PrependBlobPathIfRequired(Settings, puzzlePiece.BlobImagePath)}")
             });
 
             puzzlePieceMetadata.AddPuzzlePieceMetadata(id, cborMetadata.EncodeToBytes());
@@ -223,29 +223,37 @@ public class OrderGrain : GrainBase<Domain.Entities.OrderAggregate.Order>, IOrde
         return new CancelOrderResponse().ToSuccessResponse();
     }
 
-    public override string ResolveSubscriptionName(DomainEvent @event)
+    public override IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event)
     {
         if (State.DomainAggregate == null)
         {
-            return String.Empty;
+            return String.Empty.ToSingletonList();
         }
 
-        var subscriptionName = @event switch
+        var subscriptionNames = @event switch
         {
-            OrderCancelled => State.DomainAggregate.UserWalletId,
-            _ => string.Empty
+            OrderCancelled => State.DomainAggregate.UserWalletId!.ToSingletonList(),
+            _ => string.Empty.ToSingletonList()
         };
 
-        return subscriptionName ?? String.Empty;
+        return subscriptionNames;
     }
 
     private async Task OnBlockchainTransactionRejected(BlockchainTransactionFailed @event)
     {
         Logger.LogInformation("Order {id} received {event}", this.GetGrainId().GetGuidKey(), @event);
         State.DomainAggregate.ThrowIfNull();
-        State.DomainAggregate.CancelOrder();
-        await WriteStateAsync();
 
+        if (@event.IsDoubleSpent)
+        {
+            State.DomainAggregate.CancelOrder();    
+        }
+        else
+        {
+            State.DomainAggregate.MarkAsSubmissionFailed();
+        }
+
+        await WriteStateAsync();
         var userWalletGrain = GrainFactory.GetGrain<IUserWalletGrain>(State.DomainAggregate.UserWalletId);
         await userWalletGrain.SendSignalRMessage(new OrderFailed(State.DomainAggregate.Id));
     }

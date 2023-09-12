@@ -20,8 +20,8 @@ public class UpdateUserWalletStateCommandHandler : Handler<UpdateUserWalletState
     public override async Task<ResultOrError<SendWalletUtxosResponse>> Execute(UpdateUserWalletStateCommand request, CancellationToken cancellationToken)
     {
         request.ThrowIfNull();
-        var userWalletGrain = ClusterClient.GetGrain<IUserWalletGrain>(request.StakeAddress);
-        await userWalletGrain.UpdateWalletState(new GrainCommand.UpdateUserWalletStateCommand(request.UtxoAssets));
+        var userWalletGrain = ClusterClient.GetGrain<IUserWalletGrain>(request.StakingAddress);
+        await userWalletGrain.UpdateWalletState(new GrainCommand.UpdateUserWalletStateCommand(request.UtxoAssets, request.PaymentAddress));
         return new SendWalletUtxosResponse().ToSuccessResponse();
     }
 }
@@ -30,6 +30,8 @@ public class UpdateUserWalletStateCommandValidator : AbstractValidator<UpdateUse
 {
     public UpdateUserWalletStateCommandValidator()
     {
-        RuleFor(x => x.UtxoAssets).ThrowIfNull();
+        RuleFor(x => x.UtxoAssets).NotNull();
+        RuleFor(x => x.PaymentAddress).NotEmpty();
+        RuleFor(x => x.StakingAddress).NotEmpty();
     }
 }

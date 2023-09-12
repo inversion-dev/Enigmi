@@ -72,7 +72,7 @@ public class BlockchainTransactionSubmission : DomainEntity
         }
         
         State = BlockchainTransactionProcessState.NotIncluded;
-        RaiseEvent(new BlockchainTransactionFailed(State));
+        RaiseEvent(new BlockchainTransactionFailed(State, false));
     }
 
     private bool IsTransitionAllowed(BlockchainTransactionProcessState newState)
@@ -164,7 +164,7 @@ public class BlockchainTransactionSubmission : DomainEntity
         State = BlockchainTransactionProcessState.SubmissionTransientFailure;
     }
 
-    public void MarkAsRejected(int maxTransientRejectedCount)
+    public void MarkAsRejected(int maxTransientRejectedCount, bool isDoubleSpent)
     {
         maxTransientRejectedCount.ThrowIf(x => x < 0);
         
@@ -186,7 +186,7 @@ public class BlockchainTransactionSubmission : DomainEntity
             }
 
             State = BlockchainTransactionProcessState.Rejected;
-            RaiseEvent(new BlockchainTransactionFailed(State));
+            RaiseEvent(new BlockchainTransactionFailed(State, isDoubleSpent));
         }
     }
 

@@ -35,7 +35,7 @@ public class UserWalletTests
                 new List<UtxoAsset>
                 {
                     new("abc", 1, "2a709b1d9c6a442317ee1032838415a48a3c66d6863e3ccf12bb48a02a709b1d9c6a442317ee1032838415a48a3c66d6863e3ccf12bb48a0", 1),
-                }));
+                }, "abc", "payment_address_xxxx"));
 
             var userWallet = await userWalletGrain.GetUserWallet();
             userWallet.AvailableUtxoAssets.Should().HaveCount(1);
@@ -48,7 +48,7 @@ public class UserWalletTests
             var userWallet = await userWalletGrain.GetUserWallet();
             userWallet.OnlineState.Should().Be(OnlineState.Offline);
 
-            await userWalletGrain.Connect(new ConnectUserCommand(new List<UtxoAsset>()));
+            await userWalletGrain.Connect(new ConnectUserCommand(new List<UtxoAsset>(), "abc", "aaa"));
             var userWallet2 = await userWalletGrain.GetUserWallet();
             userWallet2.OnlineState.Should().Be(OnlineState.Online);
         }
@@ -56,14 +56,14 @@ public class UserWalletTests
         [Fact]
         public async Task ShouldBeOffLineWhenNoPingReplyHasBeenReceived()
         {
-            var settingsGrain = ClusterClient.GetGrain<IGrainSettingsGrain>(0);
+            var settingsGrain = ClusterClient.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
             var settings = await settingsGrain.GetSettings();
             settings.UserWalletRoundTripPingInterval = TimeSpan.FromSeconds(2);
             settings.UserWalletOnlineIdleTimeout = TimeSpan.FromSeconds(4);
             await settingsGrain.UpdateSettings(settings);
 
             var userWalletGrain = ClusterClient.GetGrain<IUserWalletGrain>("stake_address_xxxx4");
-            await userWalletGrain.Connect(new ConnectUserCommand(new List<UtxoAsset>()));
+            await userWalletGrain.Connect(new ConnectUserCommand(new List<UtxoAsset>(), "abc", "aaa"));
 
             await Task.Delay(TimeSpan.FromSeconds(3));
             await userWalletGrain.ReplyToClientPing(); //simulate ping
@@ -94,7 +94,7 @@ public class UserWalletTests
             {
                 new("abc", 1, "2a709b1d9c6a442317ee1032838415a48a3c66d6863e3ccf12bb48a02a709b1d9c6a442317ee1032838415a48a3c66d6863e3ccf12bb48a0", 1),
                 new("abc", 1, "2a709b1d9c6a442317ee1032838415a48a3c66d6863e3ccf12bb48a02a709b1d9c6a442317ee1032838415a48a3c66d6863e3ccf12bb48a1", 2),
-            }));
+            }, "abc"));
 
             var userWallet = await userWalletGrain.GetUserWallet();
             userWallet.AvailableUtxoAssets.Should().HaveCount(2);
@@ -124,7 +124,7 @@ public class UserWalletTests
             {
                 utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1));
             }
-            await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(utxoAssets));
+            await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(utxoAssets,"aaa"));
 
             var state = await userWalletGrain.GetActiveCompletedOrderPuzzlePieces(createOrderResponse.Id);
             state.ThrowIfNull();
@@ -145,7 +145,7 @@ public class UserWalletTests
                 utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1));
             }
 
-            await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(utxoAssets));
+            await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(utxoAssets, "aaa"));
 
             var walletState = await userWalletGrain.GetState();
             walletState.PuzzlePieces.Count.Should().Be(4);

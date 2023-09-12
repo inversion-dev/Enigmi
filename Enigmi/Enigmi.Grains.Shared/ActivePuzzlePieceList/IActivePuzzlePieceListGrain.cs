@@ -1,4 +1,5 @@
 ﻿using Enigmi.Common.Messaging;
+using Enigmi.Domain.ValueObjects;
 using Enigmi.Grains.Shared.ActivePuzzlePieceList.Messages;
 using Enigmi.Grains.Shared.UserWallet.Messages;
 
@@ -10,9 +11,14 @@ public interface IActivePuzzlePieceListGrain : IGrainWithIntegerKey
     
     Task<GetStateResponse> GetActivePuzzlePieces(string stakingAddress);
     
-    Task<GetStateResponse> GetActivePuzzlePieces(IEnumerable<string> puzzlePieceIds, string requestingStakingAddress);
+    Task<GetStateResponse> GetActivePuzzlePieces(IEnumerable<string> puzzlePieceIds);
 
     Task ProcessSignalRMessageQueue();
 
-    Task<GetPotentialTradeRequest> FindPotentialTrades(string initiatingStakingAddress, Guid puzzlePieceDefinitionId);
+    Task<GetPotentialTradeResponse> FindPotentialTrades(string initiatingStakingAddress, Guid puzzlePieceDefinitionId);
+
+    Task<Domain.ValueObjects.TradeDetail?> GetPotentialTrade(string initiatingStakingAddress, string initiatingPuzzlePieceId,
+        string counterpartyPuzzlePieceId, string counterpartyPieceStakingAddress);
+
+    Task<ResultOrError<GetPuzzleDefinitionsResponse>> GetPuzzleDefinitions(IEnumerable<Guid> puzzlePieceDefinitionIds);
 }

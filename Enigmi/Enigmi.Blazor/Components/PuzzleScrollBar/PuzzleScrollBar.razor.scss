@@ -1,8 +1,9 @@
 ﻿.view-puzzle-pieces {
-    &.mini-map-list {
-        width: 203px;
+    &.mini-map-list {        
         height: calc(100vh - 90px);
         overflow-y: auto;
+
+        font-size:9px;
 
         .puzzle-container {
             .puzzle {

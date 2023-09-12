@@ -7,6 +7,7 @@ using Enigmi.Domain.Entities.PuzzlePieceDispenserAggregate;
 using Enigmi.Grains.Shared.GrainSettings;
 using Enigmi.Grains.Shared.PuzzlePieceDispenser;
 using Enigmi.Grains.Shared.PuzzlePieceDispenser.Messages;
+using Enigmi.Infrastructure.Services.PuzzlePieceDispenserStrategy;
 using Microsoft.Extensions.Logging;
 using Orleans.Providers;
 
@@ -15,12 +16,15 @@ namespace Enigmi.Application.Dispenser;
 [StorageProvider(ProviderName = Constants.GrainStorageProviderName)]
 public class PuzzlePieceDispenserGrain : GrainBase<Domain.Entities.PuzzlePieceDispenserAggregate.PuzzlePieceDispenser>, IPuzzlePieceDispenserGrain
 {
+    private IPuzzlePieceDispenserStrategy PuzzlePieceDispenserStrategy { get; }
+
     private readonly ILogger _logger;
 
     private IDisposable? ReleaseExpiredReservationsTimer { get; set; }
 
-    public PuzzlePieceDispenserGrain(ILogger<PuzzlePieceDispenserGrain> logger)
+    public PuzzlePieceDispenserGrain(ILogger<PuzzlePieceDispenserGrain> logger, IPuzzlePieceDispenserStrategy puzzlePieceDispenserStrategy)
     {
+        PuzzlePieceDispenserStrategy = puzzlePieceDispenserStrategy;
         _logger = logger.ThrowIfNull();
     }
 
@@ -30,7 +34,7 @@ public class PuzzlePieceDispenserGrain : GrainBase<Domain.Entities.PuzzlePieceDi
         {
             (Guid puzzleCollectionId, int puzzleSize) = PuzzlePieceDispenser.SplitId(this.GrainReference!.GrainId!.Key!.ToString()!);
 
-            var grainSettingsGrain = GrainFactory.GetGrain<IGrainSettingsGrain>(0);
+            var grainSettingsGrain = GrainFactory.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
             var grainSettings = await grainSettingsGrain.GetSettings();
 
             State.DomainAggregate = new PuzzlePieceDispenser(puzzleCollectionId, puzzleSize, grainSettings.PuzzlePieceDispenserGrain.DispenserExpiresTimespan);
@@ -56,26 +60,29 @@ public class PuzzlePieceDispenserGrain : GrainBase<Domain.Entities.PuzzlePieceDi
         return new Constants.Unit().ToSuccessResponse();
     }
 
-    public async Task<ResultOrError<ReserveRandomPuzzlePiecesResponse>> ReserveRandomPuzzlePieces(ReserveRandomPuzzlePiecesCommand command)
+    public async Task<ResultOrError<ReservePuzzlePiecesResponse>> ReservePuzzlePieces(ReservePuzzlePiecesCommand command)
     {
         command.ThrowIfNull();
-        var reservedPuzzlePieceIds = State.DomainAggregate!.ReserveRandomPuzzlePieces(command.ReservationId, command.Quantity);
+        State.DomainAggregate.ThrowIfNull();
+
+        var reservedPuzzlePieceIds = PuzzlePieceDispenserStrategy.GetPuzzlePieceIds(State.DomainAggregate.GetPuzzlePieceIdsAvailableForReservation(), command.Quantity);
+        State.DomainAggregate!.ReservePuzzlePieces(command.ReservationId, reservedPuzzlePieceIds);
         await WriteStateAsync();
 
-        return new ReserveRandomPuzzlePiecesResponse(reservedPuzzlePieceIds.ToList()).ToSuccessResponse();
+        return new ReservePuzzlePiecesResponse(reservedPuzzlePieceIds.ToList()).ToSuccessResponse();
     }
 
-    public override string ResolveSubscriptionName(DomainEvent @event)
+    public override IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event)
     {
         @event.ThrowIfNull();
         this.State.DomainAggregate.ThrowIfNull();
 
-        string subscriptionName = @event switch
+        var subscriptionNames = @event switch
         {
-            _ => string.Empty,
+            _ => string.Empty.ToSingletonList(),
         };
 
-        return subscriptionName;
+        return subscriptionNames;
     }
 
     private async Task ReleaseExpiredReservationsHandler(object state)

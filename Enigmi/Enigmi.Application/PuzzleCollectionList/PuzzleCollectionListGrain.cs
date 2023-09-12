@@ -46,10 +46,10 @@ public class PuzzleCollectionListGrain : GrainBase<Domain.Entities.PuzzleCollect
         await WriteStateAsync();
     }
 
-    public override string ResolveSubscriptionName(DomainEvent @event)
+    public override IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event)
     {
         @event.ThrowIfNull();
-        return string.Empty;
+        return string.Empty.ToSingletonList();
     }
     
     public Task<ResultOrError<GetPuzzleCollectionsResponse>> GetPuzzleCollections(GetPuzzleCollectionsRequest request)

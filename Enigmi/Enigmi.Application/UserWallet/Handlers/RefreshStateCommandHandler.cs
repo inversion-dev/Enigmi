@@ -20,9 +20,9 @@ public class RefreshStateCommandHandler : Handler<RefreshStateCommand, RefreshSt
     public override async Task<ResultOrError<RefreshStateResponse>> Execute(RefreshStateCommand request, CancellationToken cancellationToken)
     {
         request.ThrowIfNull();
-        var userWalletGrain = ClusterClient.GetGrain<IUserWalletGrain>(request.StakeAddress);
+        var userWalletGrain = ClusterClient.GetGrain<IUserWalletGrain>(request.StakingAddress);
 
-        var response = await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(request.UtxoAssets));
+        var response = await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(request.UtxoAssets, request.PaymentAddress));
         return response.Transform(o => new RefreshStateResponse());
     }
 }
@@ -31,7 +31,8 @@ public class RefreshStateCommandValidator : AbstractValidator<RefreshStateComman
 {
     public RefreshStateCommandValidator()
     {
-        RuleFor(x => x.StakeAddress).ThrowIfNull();
+        RuleFor(x => x.PaymentAddress).NotEmpty();
+        RuleFor(x => x.StakingAddress).NotEmpty();
         RuleFor(x => x.UtxoAssets).NotNull();
     }
 }

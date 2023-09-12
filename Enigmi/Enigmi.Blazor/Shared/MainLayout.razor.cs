@@ -1,4 +1,5 @@
-﻿using Blazored.Modal.Services;
+﻿using Blazored.LocalStorage;
+using Blazored.Modal.Services;
 using Blazored.Toast.Services;
 using CardanoSharp.Blazor.Components;
 using Enigmi.Blazor.Events;
@@ -21,6 +22,9 @@ public partial class MainLayout : IDisposable
 
     [Inject]
     private OnUserWalletStateRefreshedEvent OnUserWalletStateRefreshedEvent { get; set; } = null!;
+
+    [Inject]
+    private ILocalStorageService LocalStorageService { get; set; } = null!;
 
     private WalletConnector? WalletConnector { get; set; }
     
@@ -105,13 +109,21 @@ public partial class MainLayout : IDisposable
     {
         if (AuthenticationClient.IsAuthenticated)
         {
-            var stakeAddress = await WalletConnection.GetRewardAddress();
+            var stakeAddress = WalletConnection.SelectedStakingAddress;
             if (stakeAddress == null)
             {
                 return;
             }
 
-            await ApiClient.SendAsync(new ConnectUserCommand(stakeAddress.ToString()));
+            var nickname = await LocalStorageService.GetItemAsync<string>(Constants.NicknameStorageKey);
+            if (string.IsNullOrWhiteSpace(nickname))
+            {
+                await ShowOfflineStatePopup();
+                StateHasChanged();
+                return;
+            }
+
+            await ApiClient.SendAsync(new ConnectUserCommand(stakeAddress.ToString(), nickname));
         }
         
         StateHasChanged();
@@ -135,22 +147,13 @@ public partial class MainLayout : IDisposable
         SignalRClient.On(async (UserWalletStateHasChanged message) =>
         {
             if (AuthenticationClient.IsAuthenticated)
-            {
-                var stakeAddress = await this.WalletConnection.GetRewardAddress();
-                if (stakeAddress != null)
-                {
-                    await ApiClient.SendAsync(new RefreshStateCommand(stakeAddress.ToString()));
-                }
+            {                
+                await ApiClient.SendAsync(new RefreshStateCommand(WalletConnection.SelectedStakingAddress));                
             }
         });
 
-        
-        
-
         IsInitialized = true;
     }
-
-  
 
     private async Task ShowOfflineStatePopup()
     {
@@ -198,25 +201,12 @@ public partial class MainLayout : IDisposable
 
         if (AuthenticationClient.IsAuthenticated)
         {
-            var address = await WalletConnection.GetRewardAddress();
-            if (address == null)
-            {
-                this.ToastService.ShowError("Could not find reward address");
-                return;
-            }
-
-            await ApiClient.SendAsync(new ReplyToPingUserWalletCommand(address.ToString()));
+            await ApiClient.SendAsync(new ReplyToPingUserWalletCommand(WalletConnection.SelectedStakingAddress));
         }
     }
 
     private async Task SendUtxosToWalletGrain()
     {   
-        var stakeAddress = await WalletConnection.GetRewardAddress();
-        if (stakeAddress == null)
-        {
-            return;
-        }
-
-        await ApiClient.SendAsync(new UpdateUserWalletStateCommand(stakeAddress.ToString()));
+        await ApiClient.SendAsync(new UpdateUserWalletStateCommand(WalletConnection.SelectedStakingAddress));
     }
 }

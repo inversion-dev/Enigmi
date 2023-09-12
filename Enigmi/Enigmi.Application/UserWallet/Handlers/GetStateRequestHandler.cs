@@ -45,6 +45,7 @@ public class GetStateRequestHandler : Handler<GetStateRequest, GetStateResponse>
                 (
                     x.Id,
                     x.Title,
+                    x.CollectionTitle,
                     x.PuzzleSize,
                     x.NumberOfAllowedBuilds,
                     x.NumberOfCompletedBuilds

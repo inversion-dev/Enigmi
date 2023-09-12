@@ -1,4 +1,5 @@
-﻿using Enigmi.Blazor.Events;
+﻿using Blazored.LocalStorage;
+using Enigmi.Blazor.Events;
 using Enigmi.Blazor.Utils;
 using Microsoft.AspNetCore.Components;
 
@@ -13,7 +14,16 @@ public partial class Menu : IDisposable
     private OnUserWalletStateReceivedEvent OnUserWalletStateReceivedEvent { get; set; } = null!;
 
     [Inject]
+    private OnRequestOfferMadeListEvent OnRequestOfferMadeListEvent { get; set; } = null!;
+
+    [Inject]
     private AuthenticationClient AuthenticationClient { get; set; } = null!;
+
+    [Inject]
+    private OnNicknameUpdatedEvent OnNicknameUpdatedEvent { get; set; } = null!;
+
+    [Inject]
+    private ILocalStorageService LocalStorageService { get; set; } = null!;
 
     [Parameter]
 	public int OwnedPuzzleCount { get; set; } = 0;
@@ -30,12 +40,11 @@ public partial class Menu : IDisposable
 	[Parameter]
 	public int NotificationCount { get; set; } = 0;
 
-	[Parameter]
-	public string? UserName { get; set; }
+	private string? UserName { get; set; }
 
-    public bool IsBuyNewPieceEnabled { get; set; } = false;
+	private bool IsBuyNewPieceEnabled { get; set; } = false;
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         base.OnAfterRender(firstRender);
 
@@ -45,7 +54,19 @@ public partial class Menu : IDisposable
 	        StateHasChanged();	        
             AuthenticationClient.OnAuthenticationStateChanged += ClientAuthentication_OnAuthenticationStateChanged;
             OnUserWalletStateReceivedEvent.Subscribe(ClientEventUtilOnOnUserWalletStateReceived);
+
+            var nickname = await LocalStorageService.GetItemAsync<string>(Constants.NicknameStorageKey);
+            UserName = nickname;
+
+            OnNicknameUpdatedEvent.Subscribe(OnNicknameUpdated);
         }
+    }
+
+    private async void OnNicknameUpdated(object? sender, EventArgs e)
+    {
+        var nickname = await LocalStorageService.GetItemAsync<string>(Constants.NicknameStorageKey);
+        UserName = nickname;
+        StateHasChanged();
     }
 
     private void ClientEventUtilOnOnUserWalletStateReceived(object? sender, WalletStateReceivedEventArgs e)
@@ -70,5 +91,12 @@ public partial class Menu : IDisposable
     {
         AuthenticationClient.OnAuthenticationStateChanged -= ClientAuthentication_OnAuthenticationStateChanged;
         OnUserWalletStateReceivedEvent.UnSubscribe(ClientEventUtilOnOnUserWalletStateReceived);
+        OnNicknameUpdatedEvent.UnSubscribe(OnNicknameUpdated);
+    }
+
+    public async Task ShowActiveTrades()
+    {
+        OnRequestOfferMadeListEvent.Trigger();
+        await Task.CompletedTask;
     }
 }

@@ -12,5 +12,5 @@ public record GetStateResponse(List<GetStateResponse.PuzzlePiece> PuzzlePieces,
 {
     public record PuzzlePiece(Guid PuzzlePieceDefinitionId, Guid PuzzleDefinitionId, String ImageUrl, int X, int Y, bool IsOwned, List<string> OwnedPuzzlePieceIds, int PuzzlePieceCount);
 
-    public record PuzzleDefinition(Guid Id, String Title, int PuzzleSize, int NumberOfAllowedBuilds, int NumberOfCompletedBuilds);
+    public record PuzzleDefinition(Guid Id, String Title, String PuzzleCollectionTitle, int PuzzleSize, int NumberOfAllowedBuilds, int NumberOfCompletedBuilds);
 }

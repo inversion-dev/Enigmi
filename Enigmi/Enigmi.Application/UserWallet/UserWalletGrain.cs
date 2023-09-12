@@ -9,12 +9,9 @@ using Enigmi.Domain.Entities.OrderAggregate;
 using Enigmi.Domain.Entities.OrderAggregate.Events;
 using Enigmi.Domain.Entities.PolicyListAggregate;
 using Enigmi.Domain.Entities.PolicyListAggregate.ValueObjects;
-using Enigmi.Domain.Entities.PuzzleDefinitionAggregate;
-using Enigmi.Domain.Entities.PuzzlePieceAggregate;
 using Enigmi.Domain.Entities.PuzzlePieceDispenserAggregate;
 using Enigmi.Domain.Entities.UserWalletAggregate;
 using Enigmi.Domain.Entities.UserWalletAggregate.Events;
-using Enigmi.Domain.Utils;
 using Enigmi.Grains.Shared.ActivePuzzlePieceList;
 using Enigmi.Grains.Shared.ActivePuzzlePieceList.Messages;
 using Enigmi.Grains.Shared.Order;
@@ -23,8 +20,11 @@ using Enigmi.Grains.Shared.PolicyCollection;
 using Enigmi.Grains.Shared.PuzzlePiece;
 using Enigmi.Grains.Shared.PuzzlePieceDispenser;
 using Enigmi.Grains.Shared.PuzzlePieceDispenser.Messages;
+using Enigmi.Grains.Shared.Trade;
+using Enigmi.Grains.Shared.Trade.Messages;
 using Enigmi.Grains.Shared.UserWallet;
 using Enigmi.Grains.Shared.UserWallet.Messages;
+using Enigmi.Grains.Shared.UserWalletActiveTradeList;
 using Enigmi.Infrastructure.Extensions;
 using Enigmi.Infrastructure.Services.SignalR;
 using Enigmi.Messages.SignalRMessage;
@@ -59,7 +59,7 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
     {
         if (State.DomainAggregate == null)
         {
-            State.DomainAggregate = new Domain.Entities.UserWalletAggregate.UserWallet();
+            State.DomainAggregate = new Domain.Entities.UserWalletAggregate.UserWallet(this.GetPrimaryKeyString());
             await WriteStateAsync();
         }
 
@@ -70,6 +70,9 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
 
         await Subscribe<UserWalletWentOffline>(this.GetPrimaryKeyString(), OnUserWalletWentOffline);
         await Subscribe<OrderCancelled>(this.GetPrimaryKeyString(), OnOrderCancelled);
+        
+        var userWalletActiveTradeListGrain = GrainFactory.GetGrain<IUserWalletActiveTradeListGrain>(State.DomainAggregate.StakingAddress);        
+        await userWalletActiveTradeListGrain.Create();
 
         await base.OnActivateAsync(cancellationToken);
     }
@@ -103,8 +106,17 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
         State.DomainAggregate.ThrowIfNull();
         if (State.DomainAggregate.OnlineState == OnlineState.Offline)
         {
-            var activePuzzlePieceListGrain = GrainFactory.GetGrain<IActivePuzzlePieceListGrain>(0);
-            await activePuzzlePieceListGrain.UpdateActivePuzzlePieces(new UpdateActivePuzzlePiecesCommand(this.GetPrimaryKeyString(),new List<UpdateActivePuzzlePiecesCommand.PuzzlePiece>()));
+            var activePuzzlePieceListGrain = GrainFactory.GetGrain<IActivePuzzlePieceListGrain>(Constants.SingletonGrain);
+            var nickname = State.DomainAggregate.Nickname;
+            await activePuzzlePieceListGrain.UpdateActivePuzzlePieces(new UpdateActivePuzzlePiecesCommand(this.GetPrimaryKeyString(), nickname, new List<UpdateActivePuzzlePiecesCommand.PuzzlePiece>()));
+
+            var userWalletActiveTradeListGrain = this.GrainFactory.GetGrain<IUserWalletActiveTradeListGrain>(this.GetPrimaryKeyString());
+            var trades = await userWalletActiveTradeListGrain.GetActiveTrades();
+            foreach (var trade in trades)
+            {
+                var tradeGrain = this.GrainFactory.GetGrain<ITradeGrain>(trade.Id);
+                await tradeGrain.GoOffline(this.GetPrimaryKeyString());
+            }
             
             await SendSignalRMessage(new NotifyUserAboutOfflineState());    
         }
@@ -145,7 +157,7 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
         var dispenserGrain = GrainFactory.GetGrain<IPuzzlePieceDispenserGrain>(PuzzlePieceDispenser.GetId(command.PuzzleCollectionId, command.PuzzleSize));
 
         var orderId = Guid.NewGuid();
-        var reservationResponse = await dispenserGrain.ReserveRandomPuzzlePieces(new ReserveRandomPuzzlePiecesCommand(orderId, command.Quantity));
+        var reservationResponse = await dispenserGrain.ReservePuzzlePieces(new ReservePuzzlePiecesCommand(orderId, command.Quantity));
         if (reservationResponse.HasErrors)
         {
             return reservationResponse.Errors.ToFailedResponse<CreateOrderResponse>();
@@ -238,7 +250,7 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
     {
         command.ThrowIfNull();
         State.DomainAggregate.ThrowIfNull();
-        State.DomainAggregate.UpdateWalletState(command.Utxos);
+        State.DomainAggregate.UpdateWalletState(command.Utxos, command.PaymentAddress);
         await WriteStateAsync();
         
         var updateActivePuzzlePiecesResponse = await UpdateActivePuzzlePieces();
@@ -262,8 +274,9 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
 
         var puzzlePieces = await BuildActivePuzzlePiecesList(ownedPuzzlePiecesIds);
 
-        var activePuzzlePieceListGrain = GrainFactory.GetGrain<IActivePuzzlePieceListGrain>(0);
-        var updateActivePuzzlePiecesResponse = await activePuzzlePieceListGrain.UpdateActivePuzzlePieces(new UpdateActivePuzzlePiecesCommand(this.GetPrimaryKeyString(),puzzlePieces));
+        var activePuzzlePieceListGrain = GrainFactory.GetGrain<IActivePuzzlePieceListGrain>(Constants.SingletonGrain);
+        var nickname = State.DomainAggregate.Nickname;
+        var updateActivePuzzlePiecesResponse = await activePuzzlePieceListGrain.UpdateActivePuzzlePieces(new UpdateActivePuzzlePiecesCommand(this.GetPrimaryKeyString(),nickname, puzzlePieces));
 
         if (updateActivePuzzlePiecesResponse.HasErrors)
         {
@@ -275,7 +288,7 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
 
     private async Task<List<PolicyToPuzzleCollectionMap>> GetPuzzlePiecesPolicies()
     {
-        var policyCollectionGrain = this.GrainFactory.GetGrain<IPolicyListGrain>(0);
+        var policyCollectionGrain = this.GrainFactory.GetGrain<IPolicyListGrain>(Constants.SingletonGrain);
         var policies = await policyCollectionGrain.GetPolicies();
         var puzzlePiecesPolicies = policies.Where(x => x.PolicyType == PolicyType.PuzzlePiece).ToList();
         return puzzlePiecesPolicies;
@@ -303,8 +316,9 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
     public async Task<ResultOrError<ConnectUserResponse>> Connect(ConnectUserCommand command)
     {
         command.ThrowIfNull();
-        await UpdateWalletState(new UpdateUserWalletStateCommand(command.UtxoAssets));
         State.DomainAggregate.ThrowIfNull();
+        State.DomainAggregate.SetNickname(command.Nickname);
+        await UpdateWalletState(new UpdateUserWalletStateCommand(command.UtxoAssets, command.PaymentAddress));
         State.DomainAggregate.GoOnline();
         await PingUser();
         await ReschedulePingTimerIfRequired();
@@ -318,24 +332,24 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
         return Task.FromResult(State.DomainAggregate);
     }
 
-    public override string ResolveSubscriptionName(DomainEvent @event)
+    public override IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event)
     {
         @event.ThrowIfNull();
         State.DomainAggregate.ThrowIfNull();
 
-        string subscriptionName = @event switch
+        var subscriptionNames = @event switch
         {
-            UserWalletWentOffline => this.GetPrimaryKeyString(),
-            _ => string.Empty,
+            UserWalletWentOffline => this.GetPrimaryKeyString().ToSingletonList(),
+            _ => string.Empty.ToSingletonList(),
         };
 
-        return subscriptionName;
+        return subscriptionNames;
     }
     
     public async Task<GetStateResponse> GetState()
     {
         State.DomainAggregate.ThrowIfNull();
-        var activePuzzlePieceListGrain = GrainFactory.GetGrain<IActivePuzzlePieceListGrain>(0);
+        var activePuzzlePieceListGrain = GrainFactory.GetGrain<IActivePuzzlePieceListGrain>(Constants.SingletonGrain);
         return await activePuzzlePieceListGrain.GetActivePuzzlePieces(this.GetPrimaryKeyString());
     }
 
@@ -359,8 +373,8 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
         
         var puzzlePieceIds = order.OrderedPuzzlePieces.Select(x => x.Id).ToList();
 
-        var activePuzzlePieceListGrain = GrainFactory.GetGrain<IActivePuzzlePieceListGrain>(0);
-        var puzzlePiecesIncludingNotOwned = await activePuzzlePieceListGrain.GetActivePuzzlePieces(puzzlePieceIds, this.GetPrimaryKeyString());
+        var activePuzzlePieceListGrain = GrainFactory.GetGrain<IActivePuzzlePieceListGrain>(Constants.SingletonGrain);
+        var puzzlePiecesIncludingNotOwned = await activePuzzlePieceListGrain.GetActivePuzzlePieces(puzzlePieceIds);
         var response = puzzlePiecesIncludingNotOwned with { PuzzlePieces = puzzlePiecesIncludingNotOwned.PuzzlePieces.Where(x => x.IsOwned).ToList() };
         
         return response;
@@ -369,6 +383,83 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
     public async Task UserWalletStateHasChanged()
     {
         await UserSignalRChannel().SendAsync(new UserWalletStateHasChanged());
+    }
+
+    public async Task<ResultOrError<MakeAnOfferResponse>> MakeAnOffer(MakeAnOfferCommand command)
+    {
+        command.ThrowIfNull();
+        command.Offers.ThrowIfNullOrEmpty();
+        State.DomainAggregate.ThrowIfNull();
+
+        var errors = new List<(string nickname,string error)>();
+        var offersMadeSuccessfully = 0;
+        var activePuzzlePieceListGrain = GrainFactory.GetGrain<IActivePuzzlePieceListGrain>(Constants.SingletonGrain);
+
+        foreach (var offer in command.Offers)
+        {
+            var potentialTrade = await activePuzzlePieceListGrain.GetPotentialTrade(
+                State.DomainAggregate.StakingAddress,
+                offer.InitiatingPuzzlePieceId,
+                offer.CounterpartyPuzzlePieceId,
+                offer.CounterpartyStakingAddress);
+            
+            if (potentialTrade == null)
+            {
+                errors.Add((offer.CounterpartyNickname, Invariant($"{offer.CounterpartyNickname}: Trade is no longer available.")));
+                continue;
+            }
+
+            if (potentialTrade.CounterpartyPuzzlePiece.StakingAddress != offer.CounterpartyStakingAddress.ThrowIfNull())
+            {
+                errors.Add((offer.CounterpartyNickname, Invariant($"{offer.CounterpartyNickname}: Trade is no longer available. Counterparty piece has changed hands.")));
+                continue;
+            }
+
+            var tradeId = Guid.NewGuid();
+            var tradeGrain = GrainFactory.GetGrain<ITradeGrain>(tradeId);
+            var tradeResponse = await tradeGrain.CreateTrade(new CreateTradeCommand(potentialTrade));
+
+            if (tradeResponse.HasErrors)
+            {
+                foreach(var error in tradeResponse.Errors)
+                {
+                    errors.Add((offer.CounterpartyNickname, error));
+                }
+                continue;
+            }
+            
+            offersMadeSuccessfully++;
+        }
+
+        return new MakeAnOfferResponse(offersMadeSuccessfully, command.Offers.Count, errors).ToSuccessResponse();
+    }
+
+    public async Task<ResultOrError<GetTradeResponse>> GetActiveTradeList(GetActiveTradeListRequest request)
+    {
+        State.DomainAggregate.ThrowIfNull();
+        var userWalletActiveTradeListGrain = GrainFactory.GetGrain<IUserWalletActiveTradeListGrain>(this.GetPrimaryKeyString());
+        var activeTrades = await userWalletActiveTradeListGrain.GetActiveTrades();
+
+        List<Domain.Entities.UserWalletActiveTradeListAggregate.Trade> offersMade = new ();
+        List<Domain.Entities.UserWalletActiveTradeListAggregate.Trade> offersReceived = new ();
+
+        foreach (var trade in activeTrades)
+        {
+            if (trade.TradeDetail.InitiatingPiece.StakingAddress == State.DomainAggregate.StakingAddress)
+            {
+                offersMade.Add(trade);
+            }
+            else
+            {
+                offersReceived.Add(trade);
+            }
+        }
+        
+        var response = new GetTradeResponse(
+            offersMade.AsEnumerable(),
+            offersReceived.AsEnumerable());
+        
+        return response.ToSuccessResponse();
     }
 
     private List<string> GetOwnedPuzzlePiecesIds(List<UtxoAsset> tokenAssets, List<PolicyToPuzzleCollectionMap> puzzlePiecesPolicies)

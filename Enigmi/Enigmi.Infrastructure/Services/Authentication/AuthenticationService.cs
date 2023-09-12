@@ -33,7 +33,7 @@ public class AuthenticationService : IAuthenticationService
             null,
             claims, 
             null, 
-            DateTime.UtcNow.AddHours(1), 
+            DateTime.UtcNow.AddHours(8), 
             GetSigningCredentials());
 
         var tokenValue = new JwtSecurityTokenHandler().WriteToken(securityToken);

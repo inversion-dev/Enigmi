@@ -7,5 +7,5 @@ public record GetStateResponse(List<GetStateResponse.PuzzlePiece> PuzzlePieces, 
         public bool IsOwned => OwnedPuzzlePieceIds.Any();
     };
 
-    public record PuzzleDefinition(Guid Id, string Title, int PuzzleSize, int NumberOfAllowedBuilds, int NumberOfCompletedBuilds);
+    public record PuzzleDefinition(Guid Id, string Title, string CollectionTitle, int PuzzleSize, int NumberOfAllowedBuilds, int NumberOfCompletedBuilds);
 }

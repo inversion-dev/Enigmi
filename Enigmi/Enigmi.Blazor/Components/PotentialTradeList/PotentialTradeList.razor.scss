@@ -1,0 +1,83 @@
+﻿.potential-trade-list {
+    height: calc(100vh - 90px);
+    overflow-y: auto;
+    margin: 8px;
+    margin-top: 0px;
+    width: 344px;
+    position: absolute;
+    right: 0px;
+    z-index: 2;
+    background-color: white;
+
+    .spinner-container {
+        text-align: center;
+
+        .spinner-border {
+            width: 3em;
+            height: 3em;
+            text-align: center;
+        }
+    }
+
+    .potential-trade-list-header {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 6px;
+        height: 46px;
+    }
+
+    .button.btn-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+
+    .puzzle-piece-selector {
+        position: relative;
+    }
+
+    .dropdown, .dropdown-center, .dropend, .dropstart, .dropup, .dropup-center {
+        position: relative;
+    }
+
+    .puzzle-piece-selector-button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        height: 275px;
+        padding: 6px;
+        position: relative;
+        box-shadow: none !important;
+        outline: inherit !important;        
+    }
+
+    .dropdown-menu {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 2px;
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+
+    .disabled * {
+        filter: grayscale(1);
+        cursor: not-allowed !important;
+    }
+
+    .counter-staking-address {
+        text-overflow: ellipsis;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .puzzle-pieces {
+        width: 100px !important;
+        height: 100px !important;
+    }
+
+    .chevron-icon {
+        position: absolute;
+        right: 10px;
+    }
+}

@@ -1,0 +1,76 @@
+﻿@using Enigmi.Blazor.Components.TradeQuad
+@using static Enigmi.Messages.ActivePuzzlePieceList.GetPotentialTradesResponse;
+
+@if (!IsVisible)
+{
+    return;
+}
+
+<div class="potential-trade-list">
+
+    <div class="potential-trade-list-header">
+        <h5>Make Offers</h5>
+        <button type="button" class="btn-close" aria-label="Close" @onclick="ClosePanel"></button>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="spinner-container">
+            <span class="spinner-border spinner-border-sm"></span>
+        </div>
+    }
+    else if (TradeDetails != null)
+    {
+        @foreach (var tradeDetailForWallet in TradeDetails)
+        {
+            TradeDetail? selectedTrade = null;
+            if (SelectedTrades.ContainsKey(tradeDetailForWallet.StakingAddress))
+            {
+                selectedTrade = SelectedTrades[tradeDetailForWallet.StakingAddress];
+            }
+            var nickname = tradeDetailForWallet.TradeDetails.First().Counterparty.Nickname;
+                
+            <h5 class="counter-staking-address">@nickname</h5>
+            <div class="puzzle-piece-selector">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary puzzle-piece-selector-button" type="button" @onclick="() => ToggleDropdownMenu(tradeDetailForWallet.StakingAddress)" aria-expanded="false">
+                        @if (selectedTrade == null)
+                        {
+                            <div class="w-100">
+                                <div> No Offer </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <TradeQuad TradeDetail="selectedTrade" UserPuzzles="Puzzles" />
+                            </div>
+                        }
+                        <i class="bi bi-chevron-down chevron-icon"></i>
+                    </button>                    
+                </div>
+            </div>
+            @if (ShowDropdownMenuForStakingAddress == tradeDetailForWallet.StakingAddress)
+            {
+                <div class="dropdown-menu">
+                    @foreach (var tradeDetail in tradeDetailForWallet.TradeDetails)
+                    {
+                        <div @onclick="() => SelectTrade(tradeDetailForWallet.StakingAddress, tradeDetail)" class="@(this.OfflineStakingAddresses.Contains(tradeDetail.Counterparty.StakingAddress) ? "disabled" : "")">
+                            <TradeQuad TradeDetail="tradeDetail" UserPuzzles="Puzzles" />
+                        </div>
+                    }
+                </div>
+            }
+        }
+
+        @if (SelectedTrades.Count > 0)
+        {
+            <div style="text-align:center" class="mt-1">
+                <ActionButton ClickAction="MakeAnOffer">Make an Offer</ActionButton>
+            </div>
+        }
+
+    }
+
+
+</div>

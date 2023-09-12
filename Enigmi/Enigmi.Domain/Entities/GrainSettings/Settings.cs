@@ -11,6 +11,10 @@ public class Settings
     public OrderGrainSettings OrderGrain { get; set; } = new OrderGrainSettings();
     
     public PuzzlePieceDispenserGrainSettings PuzzlePieceDispenserGrain { get; set; } = new PuzzlePieceDispenserGrainSettings();
+    
+    public ActivePuzzlePieceListSettings ActivePuzzlePieceList { get; set; } = new ActivePuzzlePieceListSettings();
+
+    public TradeGrainSettings TradeGrain { get; set; } = new TradeGrainSettings();
 
     public int Version { get; set; }
 
@@ -33,5 +37,17 @@ public class Settings
     public sealed class PuzzlePieceDispenserGrainSettings
     {
         public TimeSpan DispenserExpiresTimespan = TimeSpan.FromMinutes(6);
+    }
+
+    public sealed class TradeGrainSettings
+    {
+        public TimeSpan InitiatingPartySignTimespanDeadline = TimeSpan.FromMinutes(2);
+    }    
+
+    public sealed class ActivePuzzlePieceListSettings
+    {
+        public int MaxStakingAddressAddressReturnCount { get; set; } = 3;
+
+        public int MaxTradeDetailsReturnCount { get; set; } = 5;
     }
 }

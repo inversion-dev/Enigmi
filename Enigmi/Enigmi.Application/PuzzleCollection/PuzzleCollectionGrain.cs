@@ -187,19 +187,19 @@ public class PuzzleCollectionGrain : GrainBase<Enigmi.Domain.Entities.PuzzleColl
         public DateTime PuzzlePiecePolicyClosingUtcDate { get; set; }
     }
 
-    public override string ResolveSubscriptionName(DomainEvent @event)
+    public override IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event)
     {
         @event.ThrowIfNull();
         State.DomainAggregate.ThrowIfNull();
 
-        var subscriptionName = @event switch
+        var subscriptionNames = @event switch
         {
-            PuzzleCollectionCreated => Constants.PolicyCollectionGrainSubscription,
-            PuzzlePiecePolicyAdded => State.DomainAggregate.Id.ToString(),
-            PuzzleCollectionPublished => Constants.PuzzleCollectionListGrainSubscription,
-            _ => string.Empty
+            PuzzleCollectionCreated => Constants.PolicyCollectionGrainSubscription.ToSingletonList(),
+            PuzzlePiecePolicyAdded => State.DomainAggregate.Id.ToString().ToSingletonList(),
+            PuzzleCollectionPublished => Constants.PuzzleCollectionListGrainSubscription.ToSingletonList(),
+            _ => string.Empty.ToSingletonList()
         };
 
-        return subscriptionName;
+        return subscriptionNames;
     }
 }

@@ -21,7 +21,7 @@ public abstract class GrainBase<T> : Grain<DomainGrainState<T>>, IAsyncObserver<
 
     protected TaskScheduler _currentTaskScheduler;
 
-    public abstract string ResolveSubscriptionName(DomainEvent @event);
+    public abstract IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event);
 
     private IDisposable? ProcessEventQueueTimer { get; set; }
 
@@ -51,13 +51,16 @@ public abstract class GrainBase<T> : Grain<DomainGrainState<T>>, IAsyncObserver<
         {
             foreach (var domainEvent in aggregate.DomainEvents.ToList())
             {
-                var subscriptionName = ResolveSubscriptionName(domainEvent);
-                if (!string.IsNullOrEmpty(subscriptionName))
+                var subscriptionNames = ResolveSubscriptionNames(domainEvent);
+                foreach (var subscriptionName in subscriptionNames)
                 {
-                    var (_, stream) = GetStream(subscriptionName);
-                    await stream.OnNextAsync(domainEvent);
+                    if (!string.IsNullOrEmpty(subscriptionName))
+                    {
+                        var (_, stream) = GetStream(subscriptionName);
+                        await stream.OnNextAsync(domainEvent);
+                    }    
                 }
-
+                
                 aggregate.MarkEventAsSent(domainEvent);
                 await base.WriteStateAsync();
             }
@@ -94,11 +97,14 @@ public abstract class GrainBase<T> : Grain<DomainGrainState<T>>, IAsyncObserver<
         var taskObject = subscription.Delegate.DynamicInvoke(item);
         await (Task)taskObject!;
 
-        var subscriptionName = ResolveSubscriptionName(item);
-        if (!string.IsNullOrEmpty(subscriptionName))
+        var subscriptionNames = ResolveSubscriptionNames(item);
+        foreach (var subscriptionName in subscriptionNames)
         {
-            var streamId = StreamId.Create(Constants.StreamNamespace, subscriptionName);
-            State.SetStreamSequence(streamId, token!);
+            if (!string.IsNullOrEmpty(subscriptionName))
+            {
+                var streamId = StreamId.Create(Constants.StreamNamespace, subscriptionName);
+                State.SetStreamSequence(streamId, token!);
+            }    
         }
 
         State.DomainAggregate.MarkEventAsProcessed(item);

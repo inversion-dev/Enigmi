@@ -2,6 +2,13 @@
 We see that you have stepped away for a while. Your active trades and offers will not be visible to other players if we have detected that you have become inactive
 
 <div class="modal-footer">
-    <ActionButton ClickAction="GoOnline">Go Online</ActionButton>
+
+    <div class="w-100">
+        <label for="nickname" class="form-label">Nickname</label>
+        <input @bind="Nickname" type="text" class="form-control" id="nickname">
+    </div>
+    
+
+    <ActionButton Enabled="IsValid" ClickAction="GoOnline">Go Online</ActionButton>
 </div>
 

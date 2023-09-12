@@ -5,4 +5,6 @@ namespace Enigmi.Messages;
 public interface IHasWalletState
 {
     IEnumerable<UtxoAsset> UtxoAssets { get; set; }
+    
+    string PaymentAddress { get; set; }
 }

@@ -21,7 +21,10 @@ public class ConnectUserCommandHandler : Handler<ConnectUserCommand, UserConnect
     {
         request.ThrowIfNull();
         var userWalletGrain = ClusterClient.GetGrain<IUserWalletGrain>(request.StakeAddress);
-        var response = await userWalletGrain.Connect(new GrainCommand.ConnectUserCommand(request.UtxoAssets));
+        var response = await userWalletGrain.Connect(new GrainCommand.ConnectUserCommand(
+            request.UtxoAssets, 
+            request.Nickname.ThrowIfNullOrWhitespace(),
+            request.PaymentAddress));
         return response.Transform(o => new UserConnectedResponse());
     }
 }
@@ -31,5 +34,6 @@ public class ConnectUserCommandValidator : AbstractValidator<ConnectUserCommand>
     public ConnectUserCommandValidator()
     {
         RuleFor(x => x.UtxoAssets).NotNull();
+        RuleFor(x => x.PaymentAddress).NotNull();
     }
 }

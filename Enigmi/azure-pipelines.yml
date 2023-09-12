@@ -1,0 +1,67 @@
+trigger:
+  - main
+  - release*
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+jobs: 
+- job: 'Job1'
+  workspace:
+    clean: all
+  steps:
+    - checkout: self
+      submodules: true
+    - powershell: |
+        Write-Host "Show all folder content"
+        Get-ChildItem -Path $(System.DefaultWorkingDirectory)\*.* -Recurse -Force
+      errorActionPreference: continue
+      displayName: 'PowerShell Script List folder structure'
+      continueOnError: true
+      enabled: false
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet restore'
+      inputs:
+        command: 'restore'
+        projects: '**/*.csproj'
+        feedsToUse: 'select'
+        vstsFeed: '342fa666-9bae-4b8d-85a8-4f44cbf14927'
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet build'
+      inputs:
+        command: 'build'
+        projects: '**/*.csproj'
+        arguments: '--no-restore --configuration $(buildConfiguration)'
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish DbUp'
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: '**/ArtBank.DbUp.csproj'
+        arguments: '--no-build --configuration $(buildConfiguration) --output $(Pipeline.Workspace)/DbUp'
+        zipAfterPublish: false
+        modifyOutputPath: false
+    - task: CopyFiles@2
+      displayName: 'Copy src files'
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: '**'
+        TargetFolder: '$(Pipeline.Workspace)/src'
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish artifact: src'
+      inputs:
+        targetPath: '$(Pipeline.Workspace)/src'
+        artifact: 'src'
+        publishLocation: 'pipeline'
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish artifact: DbUp'
+      inputs:
+        targetPath: '$(Pipeline.Workspace)/DbUp'
+        artifact: 'DbUp'
+        publishLocation: 'pipeline'
+        

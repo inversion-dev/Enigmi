@@ -1,27 +1,44 @@
-﻿<div class="puzzle-piece" @onclick="PuzzlePieceClicked">
+﻿<div class="puzzle-piece @(CustomCss)" @onclick="PuzzlePieceClicked" @onmouseenter=MouseEnter @onmouseleave=MouseLeave>
+
+    <div class="overlay"></div>
+
     @if (ImageUrl != null)
     {
-        <div class="image-layer @(IsOwned ? "":"not-owned")" style="background-image: url('@ImageUrl')"></div>
+        <div class="image-layer @(ShowColour ? "":"not-owned")" style="background-image: url('@ImageUrl')"></div>
     }
 
     @if (Selected)
     {
         <div class="selection-layer"></div>
     }
-        
-    <div class="icon-layer">
-        <img class="@(ShowDuplicateIcon ? "":"grayscale")" src="images/duplicates.svg">
-    </div>
-    
 
-    @if (!IsOwned && EnableFindPiece)
+    @if (ShowIconLayer)
+    {
+        <div class="icon-layer">
+            <div class="owned-count-container">
+                @if (OwnedPuzzlePieceCount > 1)
+                {
+                    <span >
+                        @OwnedPuzzlePieceCount
+                    </span>
+                }
+                <img class="@(OwnedPuzzlePieceCount <= 1 ? "grayscale":"")" src="images/duplicates.svg">
+            </div>
+        </div>
+    }
+
+
+    @if (EnableFindPiece)
     {
         <div class="find-piece">
-            <ActionButton CustomCss="btn-outline-dark" Enabled="PuzzlePieceItem.AvailablePuzzlePieceCount > 0" ClickAction="FindPiece">
-                Find Piece
-                <br>
-                @PuzzlePieceItem.AvailablePuzzlePieceCount Available
-            </ActionButton>
+            <div>
+                <ActionButton CustomCss="@(PuzzlePieceItem.AvailablePuzzlePieceCount > 0 && ShowFindPieceButton ? "btn-outline-dark" : "transparent")" ClickAction="FindPiece">
+                    <span>Find Piece</span>
+                </ActionButton>
+
+                <br />
+                <span class="available-label">@PuzzlePieceItem.AvailablePuzzlePieceCount Available</span>
+            </div>
         </div>
     }
 

@@ -6,8 +6,9 @@ public enum OrderState
 	TransactionCreated = 1,
 	TransactionSigned = 2,
 	TransactionSubmitted = 3,
-	Completed = 4,
-	Cancelled = 5,
+	TransactionSubmissionFailed = 4,
+	Completed = 5,
+	Cancelled = 6,
 }
 
 [Flags]

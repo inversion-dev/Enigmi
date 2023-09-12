@@ -27,7 +27,7 @@ public class OrleansTestBase : IAsyncLifetime
                                 Please specify the prefix at Settings.EnvironmentPrefix in your appsettings.local.json");
         }
 
-        var settingsGrain = ClusterFixture.ClusterClient.GetGrain<IGrainSettingsGrain>(0);
+        var settingsGrain = ClusterFixture.ClusterClient.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
         var settings = await settingsGrain.GetSettings();
         settings.UserWalletRoundTripPingInterval = TimeSpan.FromMinutes(1);
         settings.UserWalletOnlineIdleTimeout = TimeSpan.FromMinutes(5);

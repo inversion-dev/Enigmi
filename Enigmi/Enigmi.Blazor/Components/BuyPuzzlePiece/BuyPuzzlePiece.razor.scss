@@ -3,6 +3,9 @@
 .buy-puzzle-piece {
     width: 320px;
     height: calc(100vh - $page-header-height);
+    position: absolute;
+    left: 0;
+    z-index: 1;
 
     .panel-content {
         display: flex;
@@ -42,8 +45,7 @@
             }
         }
 
-        .bought-puzzle-pieces .puzzle-piece
-        {
+        .bought-puzzle-pieces .puzzle-piece {
             border: 1px solid #f5f5f5;
         }
 

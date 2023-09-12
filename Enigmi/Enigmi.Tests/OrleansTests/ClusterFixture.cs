@@ -19,6 +19,7 @@ using Enigmi.Grains.Shared.PuzzleCollectionSniffer.Messages;
 using Enigmi.HostSetup;
 using Enigmi.Infrastructure.Services;
 using Enigmi.Infrastructure.Services.BlockchainService;
+using Enigmi.Infrastructure.Services.PuzzlePieceDispenserStrategy;
 using Enigmi.Infrastructure.Services.SignalR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.SignalR;
@@ -78,7 +79,8 @@ public class ClusterFixture : IDisposable
         builder.Services.AddTransient<IBlockchainService>(x => blockChainMock.Object);
         builder.Services.AddTransient<IPolicyVaultService>(x => policyVaultServiceMock.Object);
         builder.Services.AddSingleton<ISignalRHubContextStore>(x => signalRHubContextStoreMock.Object);
-        
+        builder.Services.AddTransient<IPuzzlePieceDispenserStrategy, SequentialPuzzlePieceDispenserStrategy>();
+
         App = builder.Build();
 
         App.StartAsync().GetAwaiter().GetResult();
@@ -88,7 +90,7 @@ public class ClusterFixture : IDisposable
 
         Task.Run(async () =>
         {
-            var policyCollectionGrain = ClusterClient.GetGrain<IPolicyListGrain>(0);
+            var policyCollectionGrain = ClusterClient.GetGrain<IPolicyListGrain>(Constants.SingletonGrain);
             await policyCollectionGrain.Ping();
 
            await AddPuzzleCollectionWithStock();
@@ -192,6 +194,9 @@ public class ClusterFixture : IDisposable
         await CreateDropFolder(blobNames, "1");
         await CreateDropFolder(blobNames, "2");
         await CreateDropFolder(blobNames, "3");
+        await CreateDropFolder(blobNames, "4");
+        await CreateDropFolder(blobNames, "5");
+        await CreateDropFolder(blobNames, "6");
     }
 
     private async Task CreateDropFolder(List<string> blobNames, string postFix)

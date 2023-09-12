@@ -22,7 +22,7 @@ public class CreateOrderCommandHandler : Handler<CreateOrderCommand, CreateOrder
     {
         request.ThrowIfNull();
         var userWalletGrain = ClusterClient.GetGrain<IUserWalletGrain>(request.StakeAddress);
-        await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(request.UtxoAssets));
+        await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(request.UtxoAssets, request.PaymentAddress));
         var response = await userWalletGrain.CreateOrder(new Enigmi.Grains.Shared.UserWallet.Messages.CreateOrderCommand(request.PaymentAddress, request.CollectionId, request.PuzzleSize, request.Quantity));
         return response.Transform(o => new CreateOrderResponse(o.OrderId,o.UnsignedTransactionCborHex,o.Fee,o.Warning));
     }
@@ -32,6 +32,7 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 {
     public CreateOrderCommandValidator()
     {
-        RuleFor(x => x.UtxoAssets).ThrowIfNull();
+        RuleFor(x => x.UtxoAssets).NotNull();
+        RuleFor(x => x.PaymentAddress).NotEmpty();
     }
 }

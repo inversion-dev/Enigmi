@@ -50,7 +50,7 @@ public class BlockchainSubmissionGrainTests
         [Fact]
         public async Task ShouldFailWithStateOfTransientRejected()
         {
-            var grainSettings = ClusterClient.GetGrain<IGrainSettingsGrain>(0);
+            var grainSettings = ClusterClient.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
             var settings = await grainSettings.GetSettings();
             settings.OrderBlockchainTransactionSettings.MaxTransientRejectedCount = 3;
             await grainSettings.UpdateSettings(settings);
@@ -68,7 +68,7 @@ public class BlockchainSubmissionGrainTests
         {
             Guid orderId = Guid.NewGuid();
             
-            var grainSettings = ClusterClient.GetGrain<IGrainSettingsGrain>(0);
+            var grainSettings = ClusterClient.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
             var settings = await grainSettings.GetSettings();
             settings.OrderBlockchainTransactionSettings.MaxTransientRejectedCount = 1;
             await grainSettings.UpdateSettings(settings);

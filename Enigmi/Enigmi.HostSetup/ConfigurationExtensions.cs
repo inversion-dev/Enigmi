@@ -19,6 +19,7 @@ using Newtonsoft.Json;
 using Orleans.Serialization;
 using System.Reflection;
 using Enigmi.Infrastructure.Services.Authentication;
+using Enigmi.Infrastructure.Services.PuzzlePieceDispenserStrategy;
 using Enigmi.Infrastructure.Services.SignalR;
 using Orleans.Configuration;
 using static System.FormattableString;
@@ -93,7 +94,8 @@ public static class ConfigurationExtensions
         services.AddTransient<IBlobStorageService, AzureBlobStorageService>();
         services.AddTransient<IImageProcessingService, ImageProcessingService>();
         services.AddTransient<IAuthenticationService, AuthenticationService>();
-
+        services.AddTransient<IPuzzlePieceDispenserStrategy, RandomPuzzlePieceDispenserStrategy>();
+        
         services.AddLogging();
         services.ConfigureMediatr(assembliesToScan);
         services.AddValidatorsFromAssemblies(assembliesToScan, ServiceLifetime.Singleton);

@@ -1,22 +1,26 @@
 ﻿@page "/"
+
 @using Enigmi.Blazor.Components.Menu
 @using Enigmi.Blazor.Components.BuyPuzzlePiece
+@using Enigmi.Blazor.Components.TradeView
 @using Enigmi.Blazor.Components.ViewLeftoverPuzzlePieces
-@using Enigmi.Blazor.Components.PuzzleScrollBar;
 @using Enigmi.Blazor.Components.Puzzle
+@using Enigmi.Blazor.Components.PotentialTradeList
+@using Enigmi.Blazor.Components.TradeLists
 
 @if (this.AuthenticationClient.IsAuthenticated)
 {
     <div class="puzzles-page">
-        <div class="page-header">
-            <!-- todo: remove -->
-            <Menu UserName="Fred"/>
+        <div class="page-header">            
+            <Menu/>
         </div>
 
         <div class="page-content">
-            <BuyPuzzlePiece Visible="IsBuyPuzzlePieceVisible"/>
-            <PuzzleScrollBar UserPuzzles="UserPuzzles"></PuzzleScrollBar>
+            <BuyPuzzlePiece Visible="IsBuyPuzzlePieceVisible"/>            
             <Puzzle Visible="ViewPuzzlePiecesVisible" UserPuzzles="UserPuzzles"/>
+            <PotentialTradeList></PotentialTradeList>
+            <TradeView></TradeView>
+            <TradeLists></TradeLists>            
             <ViewLeftoverPuzzlePieces Visible="ViewLeftoverPuzzlePiecesVisible" LeftoverPuzzles="LeftoverPuzzles"/>
         </div>
     </div>

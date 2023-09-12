@@ -64,9 +64,6 @@ public partial class Puzzles : IDisposable
             return;
 
         await GetWalletState().ContinueOnAnyContext();
-        //await LoadCompletedPuzzles().ContinueOnAnyContext();
-        //await LoadLeftoverPuzzlePieces().ContinueOnAnyContext();
-
         OnShowBuyPuzzlePieceSectionRequestedEvent.Subscribe(ClientEventUtil_OnShowBuyPuzzlePieceSectionRequested);
         OnHideBuyPuzzlePieceSectionRequestedEvent.Subscribe(ClientEventUtilOnOnHideBuyPuzzlePieceSectionRequested);
         
@@ -81,7 +78,7 @@ public partial class Puzzles : IDisposable
         Console.WriteLine(Invariant($"UpsertActivePuzzlePiece : {message}"));
 
         var existingPiece = AvailablePuzzlePieceDefinitions.SingleOrDefault(x => x.Id == message.PuzzlePieceDefinitionId);
-
+        
         var updatedUserPuzzlePiece = new Models.PuzzlePieceDefinition
         {
             Id = message.PuzzlePieceDefinitionId,
@@ -108,8 +105,9 @@ public partial class Puzzles : IDisposable
         {
             var puzzlePiece = userPuzzle.PuzzlePieces.SingleOrDefault(x => x.PuzzlePieceDefinitionId == updatedUserPuzzlePiece.Id);
             if (puzzlePiece != null && puzzlePiece.PuzzlePiece != null)
-            {                
-                puzzlePiece.PuzzlePiece.UpdateAvailablePuzzlePieceCount(updatedUserPuzzlePiece.PuzzlePieceCount - puzzlePiece.OwnedCount);
+            {
+                puzzlePiece.SetOwnedCount(message.OwnedPuzzlePieceCount);
+                puzzlePiece.PuzzlePiece.UpdateAvailablePuzzlePieceCount(message.PuzzlePieceCount - message.OwnedPuzzlePieceCount);
                 ActivePuzzlePieceUpdatedEvent.Trigger();
             }
         }
@@ -146,13 +144,8 @@ public partial class Puzzles : IDisposable
             return;
         }
         
-        var stakeAddress = await WalletConnection.GetRewardAddress();
-        if (stakeAddress == null)
-        {
-            return;
-        }
-
-        var walletState = await ApiClient.SendAsync(new GetStateRequest(stakeAddress.ToString(), null));
+        var stakeAddress = WalletConnection.SelectedStakingAddress;
+        var walletState = await ApiClient.SendAsync(new GetStateRequest(stakeAddress, null));
         if (walletState == null)
         {
             return;
@@ -182,7 +175,7 @@ public partial class Puzzles : IDisposable
             var userPuzzle = new UserPuzzle(Guid.NewGuid(), 
                 puzzleDefinition.Id, 
                 puzzleDefinition.Title, 
-                puzzleDefinition.Title, 
+                puzzleDefinition.PuzzleCollectionTitle, 
                 puzzleDefinition.NumberOfAllowedBuilds, 
                 puzzleDefinition.NumberOfCompletedBuilds, 
                 puzzleDefinition.PuzzleSize, 
@@ -194,34 +187,6 @@ public partial class Puzzles : IDisposable
         PuzzleSelectionManager.UpdateUserPuzzles(UserPuzzles);
 
         StateHasChanged();
-    }
-
-    private async Task LoadCompletedPuzzles()
-    {
-        // TODO: load data from service
-        await Task.CompletedTask.ContinueOnAnyContext();
-    }
-
-    private async Task LoadLeftoverPuzzlePieces()
-    {
-        // TODO: load data from service
-        var completedPuzzleId = new Guid("443a6f09-4d05-4fd5-894e-3b22dd4e39be");
-        var completedPuzzle = ApiClient.Puzzles.First(x => x.Id == completedPuzzleId);
-        var completedPuzzleCollection = ApiClient.PuzzleCollections.First(x => x.Id == completedPuzzle.PuzzleCollectionId);
-        var completedPuzzlePieces = ApiClient.PuzzlesPieces.Where(x => x.PuzzleDefinitionId == completedPuzzleId);
-        var leftoverPuzzlePieces = new List<UserPuzzlePiece>();
-
-        foreach (var piece in completedPuzzlePieces)
-        {
-            var leftoverPuzzlePiece = new UserPuzzlePiece(piece.Id);
-            leftoverPuzzlePieces.Add(leftoverPuzzlePiece);
-        }
-
-        var leftoverPuzzle = new UserPuzzle(Guid.NewGuid(), completedPuzzleId, completedPuzzle.Title, completedPuzzleCollection.Title, completedPuzzle.NumberOfAllowedBuilds, completedPuzzle.NumberOfCompletedBuilds, completedPuzzle.PuzzleSize, leftoverPuzzlePieces);
-        LeftoverPuzzles.Add(leftoverPuzzle);
-        StateHasChanged();
-
-        await Task.CompletedTask.ContinueOnAnyContext();
     }
 
     public void Dispose()

@@ -46,7 +46,7 @@ public sealed class PuzzleCollectionSnifferGrain : Grain<DomainGrainState<Puzzle
 
         var puzzleCollectionGrain = GrainFactory.GetGrain<IPuzzleCollectionGrain>(puzzleCollectionId);
         
-        var policyCollectionGrain = GrainFactory.GetGrain<IPolicyListGrain>(0);
+        var policyCollectionGrain = GrainFactory.GetGrain<IPolicyListGrain>(Constants.SingletonGrain);
         await policyCollectionGrain.Ping();
 
         var createPuzzleCollectionResponse = await puzzleCollectionGrain.CreatePuzzleCollection(new CreatePuzzleCollectionCommand(command.DropSourceBlobFolderPath));

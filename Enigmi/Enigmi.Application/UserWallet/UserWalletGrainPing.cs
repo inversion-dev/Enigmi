@@ -18,7 +18,7 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
 
     private async Task<TimeSpan> GetPingInterval()
     {
-        var settingsGrain = GrainFactory.GetGrain<IGrainSettingsGrain>(0);
+        var settingsGrain = GrainFactory.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
         var settings = await settingsGrain.GetSettings();
         return settings.UserWalletRoundTripPingInterval;
     }
@@ -30,7 +30,7 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
 
     public async Task PingUser()
     {
-        var settingsGrain = GrainFactory.GetGrain<IGrainSettingsGrain>(0);
+        var settingsGrain = GrainFactory.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
         var settings = await settingsGrain.GetSettings();
         var lastRoundTripPingReceivedUtcTimestamp = State.DomainAggregate?.LastRoundTripPingReceivedUtcTimestamp;
         var utcNow = DateTime.UtcNow;

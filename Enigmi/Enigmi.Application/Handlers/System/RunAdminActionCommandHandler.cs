@@ -81,7 +81,7 @@ public class RunAdminActionCommandHandler : Handler<RunAdminActionCommand, RunAd
     {
         if (int.TryParse(command.AdditionalData, NumberStyles.Integer, CultureInfo.InvariantCulture, out int intValue))
         {
-            var grainSettingsGrain = ClusterClient.GetGrain<IGrainSettingsGrain>(0);
+            var grainSettingsGrain = ClusterClient.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
             var settings = await grainSettingsGrain.GetSettings();
 
             updateAction(settings, intValue);

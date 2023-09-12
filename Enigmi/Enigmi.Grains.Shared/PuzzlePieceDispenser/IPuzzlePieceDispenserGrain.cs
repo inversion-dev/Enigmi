@@ -5,7 +5,7 @@ namespace Enigmi.Grains.Shared.PuzzlePieceDispenser;
 
 public interface IPuzzlePieceDispenserGrain : IGrainWithStringKey
 {
-    Task<ResultOrError<ReserveRandomPuzzlePiecesResponse>> ReserveRandomPuzzlePieces(ReserveRandomPuzzlePiecesCommand command);
+    Task<ResultOrError<ReservePuzzlePiecesResponse>> ReservePuzzlePieces(ReservePuzzlePiecesCommand command);
 
     Task<ResultOrError<Constants.Unit>> AddStock(IEnumerable<string> puzzlePieceIds);
 

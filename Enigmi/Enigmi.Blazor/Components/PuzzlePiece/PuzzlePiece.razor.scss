@@ -1,4 +1,14 @@
 ﻿.puzzle-piece {
+
+    .overlay {
+        z-index: 1;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        position: absolute;        
+        display: none;
+    }
+
     position: relative;
 
     .selection-layer,
@@ -40,4 +50,40 @@
     .selection-layer {
         border: 4px dashed silver;
     }
+
+    .available-label {
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+        color: gray;
+    }
+
+    .transparent {
+        opacity: 0;
+    }
+
+    .owned-count-container {
+        display: flex;
+        align-items: center;
+        color: #25b925;
+
+        span {
+            display: inline-block;
+            position: relative;
+            left: -3px;
+        }
+    }
+}
+
+
+.show-overlay > .overlay {
+    display: inherit !important;
+}
+
+.purple-overlay > .overlay {    
+    border: solid 1px #8f37e3;
+}
+
+.blue-overlay > .overlay {
+    border: solid 1px #2196f3;
 }

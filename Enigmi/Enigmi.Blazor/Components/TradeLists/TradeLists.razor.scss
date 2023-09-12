@@ -1,0 +1,97 @@
+
+.offers-panel-header {
+    position: absolute;
+    right: 0px;
+    background-color: rgb(255, 255, 255);
+    min-width: 360px;
+    max-width: 360px;
+    box-shadow: rgb(0 0 0 / 5%) 0px 6px 24px 0px, rgb(0 0 0 / 8%) 0px 0px 0px 1px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 72px);
+    padding: 9px;
+
+
+    .offers-panel-header {
+        padding: 8px;
+        text-align: center;
+    }
+
+    .btn-group {
+        width: 340px;
+        font-weight: bold;
+    }
+
+    button.btn.btn-outline-dark {
+        width: 100px;
+        height: 84px;
+    }
+
+    .btn-group, .btn-group-vertical {
+        position: relative;
+        display: inline-flex;
+        vertical-align: middle;
+    }
+
+    .btn-group .btn-outline-dark:hover:not(.active, .show) {
+        background-color: #e0e0e0;
+        color: black;
+        filter: none;
+    }
+
+
+    .panel-tab-button .badge {
+        /* position: absolute; */
+        /* top: 0; */
+        width: 100%;
+        margin-top: 6px;
+        font-weight: bold;
+        font-size: 14px;
+        flex: 1;
+    }
+
+    .btn .badge {
+        position: relative;
+        top: -1px;
+    }
+
+    .text-bg-light {
+        color: #000 !important;
+        background-color: RGBA(248,249,250,var(--bs-bg-opacity,1)) !important;
+    }
+
+
+    button:focus:not(:focus-visible) {
+        outline: 0;
+    }
+
+    .btn-outline-dark.active:focus {
+        box-shadow: none;
+    }
+
+    .circle-number {
+        position: absolute;
+        right: -34px;
+        top: -3px;
+        width: 22px;
+        height: 22px;
+        border: solid 2px;
+        border-radius: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .circle-number-countdown {        
+        width: 30px;
+        height: 30px;
+    }
+
+    .offers-received-circle {
+        right: -25px;
+    }
+
+    .red-circle {
+        color: #bb3a08 !important;
+    }
+}

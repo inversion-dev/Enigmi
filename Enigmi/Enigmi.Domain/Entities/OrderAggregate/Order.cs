@@ -188,4 +188,9 @@ public class Order : DomainEntity
     {
         NumberOfConfirmations = numberOfConfirmations;
     }
+
+    public void MarkAsSubmissionFailed()
+    {
+        State = OrderState.TransactionSubmissionFailed;
+    }
 }

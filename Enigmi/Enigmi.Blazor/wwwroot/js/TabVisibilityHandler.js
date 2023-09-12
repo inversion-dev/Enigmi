@@ -9,4 +9,3 @@ document.addEventListener("visibilitychange", function () {
 function registerJavascriptTabVisibilityHandlerReference(tabVisiblityHandlerReference) {
     TabVisiblityHandlerReference = tabVisiblityHandlerReference
 }
-

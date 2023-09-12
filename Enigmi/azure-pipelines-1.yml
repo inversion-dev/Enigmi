@@ -1,0 +1,35 @@
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+jobs: 
+- job: 'Job1'
+  workspace:
+    clean: all
+  steps:
+    - checkout: self
+      submodules: true
+    - powershell: |
+        Write-Host "Show all folder content"
+        Get-ChildItem -Path $(System.DefaultWorkingDirectory)\*.* -Recurse -Force
+      errorActionPreference: continue
+      displayName: 'PowerShell Script List folder structure'
+      continueOnError: true   
+    - task: FileTransform@1
+      inputs:
+        folderPath: '$(System.DefaultWorkingDirectory)/Atlas.Blazor/wwwroot'
+        fileType: 'json'
+        targetFiles: '**/appsettings.json'
+    - task: AzureStaticWebApp@0
+      inputs:
+        app_location: '/Atlas.Blazor'
+        api_location: '/Atlas.InternalHost'
+        output_location: '/wwwroot'
+        azure_static_web_apps_api_token: $(deployment_token)

@@ -23,7 +23,7 @@ public class AzureBlobStorageService : IBlobStorageService
                         #endif
                         new ManagedIdentityCredential());
 
-    private Uri GetUri(string blobPath) => new Uri(Invariant($"{Settings.BlobstorageConfig.BlobStorageHost}{BlobPathHelper.PrependBlobPathIfRequired(Settings, blobPath)}"));
+    private Uri GetUri(string blobPath) => new Uri(Invariant($"{Settings.BlobstorageConfig.RootUrl}{BlobPathHelper.PrependBlobPathIfRequired(Settings, blobPath)}"));
 
     public async Task UploadFileAsync(string blobPath, byte[] fileBytes, bool overwrite = false)
     {

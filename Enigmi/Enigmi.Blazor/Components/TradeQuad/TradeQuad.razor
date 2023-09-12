@@ -1,0 +1,189 @@
+﻿@using Enigmi.Blazor.Components.PuzzlePiece
+@using Enigmi.Blazor.Components.Tooltip
+@using Enigmi.Blazor.Shared.Models;
+
+@if (UserPuzzles == null || !UserPuzzles.Any())
+{
+    return;
+}
+
+@{
+    var initiatingParty = GetParty(TradePartyType.Initiating);
+    var counterparty = GetParty(TradePartyType.Counterparty);
+    var counterpartyPuzzle = UserPuzzles.SingleOrDefault(x => x.PuzzleId == counterparty.PuzzleDefinitionId);
+    var initiatingPartyPuzzle = UserPuzzles.SingleOrDefault(x => x.PuzzleId == initiatingParty.PuzzleDefinitionId);
+
+    if (initiatingPartyPuzzle == null || counterpartyPuzzle == null)
+    {
+        return;
+    }
+}
+
+<div class="trade-summary" id="@ElementId" @onmouseenter="OnMouseEnter">
+
+    @if (this.CountdownValue.HasValue && this.CountdownValue.Value > 0)
+    {
+        <div style="position:absolute; right:0">
+            <span class="circle-number red-circle circle-number-countdown">@this.CountdownValue.Value</span>
+        </div>
+    }   
+
+    <div class="view-puzzle-pieces mini-map">
+        <!-- owner preview, after gaining puzzle  -->
+        @{
+            <div class="puzzle-container">
+
+                <div class="puzzle puzzle-@counterpartyPuzzle.PuzzleSize">
+                    <div class="puzzle-pieces">
+                        @foreach (var userPuzzlePiece in counterpartyPuzzle.PuzzlePieces)
+                        {
+                            var highlight = userPuzzlePiece.PuzzlePieceDefinitionId == counterparty.PuzzlePieceDefinitionId;
+                            var ownedPuzzleDefinition = initiatingParty.IncomingPuzzleDefinitionPieceDefinitionInventory.PuzzlePieceDefinitionIds.SingleOrDefault(x => x.PuzzlePieceDefinitionId == userPuzzlePiece.PuzzlePieceDefinitionId);                            
+
+                            var ownedCount = ownedPuzzleDefinition?.Quantity ?? 0;
+                            var isOwned = ownedCount > 0;
+
+                            var showColour = highlight || isOwned;
+                            var customCss = "";
+
+                            if (highlight)
+                            {
+                                customCss = "owner-animate-to show-overlay blue-overlay " + (isOwned ? "animate-with-colour" : "animate-without-colour");
+                            }
+
+                            <PuzzlePiece ImageUrl="@userPuzzlePiece.PuzzlePiece?.ImageUrl"
+                                 PuzzlePieceItem="userPuzzlePiece.PuzzlePiece"
+                                 ShowColour="showColour"
+                                 CustomCss="@customCss"                                 
+                                 ShowIconLayer=false />
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="vertical-line-container">
+            <hr />
+        </div>
+        
+
+        <!-- show counter party, puzzle after puzzle piece has been traded  -->
+        @{
+            <div class="puzzle-container">
+
+                <div class="puzzle puzzle-@counterpartyPuzzle.PuzzleSize">
+                    <div class="puzzle-pieces">
+                        @foreach (var userPuzzlePiece in counterpartyPuzzle.PuzzlePieces)
+                        {
+                            var highlight = userPuzzlePiece.PuzzlePieceDefinitionId == counterparty.PuzzlePieceDefinitionId;                            
+                            var ownedPuzzleDefinition = counterparty.OutgoingPuzzleDefinitionPieceDefinitionInventory.PuzzlePieceDefinitionIds.SingleOrDefault(x => x.PuzzlePieceDefinitionId == userPuzzlePiece.PuzzlePieceDefinitionId);
+                            var ownedCount = ownedPuzzleDefinition?.Quantity ?? 0;
+                            var showColour = ownedCount > 0;
+                            if (highlight && ownedCount == 1)
+                            {
+                                showColour = false;
+                            }
+
+                            var customCss = "";
+
+                            if (highlight)
+                            {
+                                customCss = "owner-animate-from show-overlay purple-overlay " + (ownedCount > 0 ? "animate-with-colour" : "animate-without-colour");
+                            }
+
+                            <PuzzlePiece ImageUrl="@userPuzzlePiece.PuzzlePiece?.ImageUrl"
+                                 PuzzlePieceItem="userPuzzlePiece.PuzzlePiece"
+                                 ShowColour="showColour"                                 
+                                 CustomCss="@customCss"
+                                 ShowIconLayer=false />
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+
+    <div class="rating-container">
+        <span>Me</span>
+        <div>
+            <Tooltip Text="Rating of 10 is very good where 0 will indicate a bad trade">
+                @(string.Format("{0:0.##}", TradeDetail.Rating))
+            </Tooltip>            
+        </div>
+        <span>@counterparty.Nickname</span>
+    </div>
+
+
+    <!-- second row -->
+
+    <div class="view-puzzle-pieces mini-map">
+        <!-- Current User Puzzle, showing leaving puzzle  -->
+        @{            
+            <div class="puzzle-container">
+
+                <div class="puzzle puzzle-@initiatingPartyPuzzle.PuzzleSize">
+                    <div class="puzzle-pieces">
+                        @foreach (var userPuzzlePiece in initiatingPartyPuzzle.PuzzlePieces)
+                        {
+                            var highlight = userPuzzlePiece.PuzzlePieceDefinitionId == initiatingParty.PuzzlePieceDefinitionId;                            
+                            var ownedPuzzleDefinition = initiatingParty.OutgoingPuzzleDefinitionPieceDefinitionInventory.PuzzlePieceDefinitionIds.SingleOrDefault(x => x.PuzzlePieceDefinitionId == userPuzzlePiece.PuzzlePieceDefinitionId);
+                            var ownedCount = ownedPuzzleDefinition?.Quantity ?? 0;
+                            var showColour = ownedCount > 0;
+                            if (highlight && ownedCount == 1)
+                            {
+                                showColour = false;
+                            }
+
+                            var customCss = "";
+
+                            if (highlight)
+                            {
+                                customCss = "counter-party-animate-from show-overlay purple-overlay " + (ownedCount > 0 ? "animate-with-colour" : "animate-without-colour");
+                            }
+
+                            <PuzzlePiece ImageUrl="@userPuzzlePiece.PuzzlePiece?.ImageUrl"
+                                 PuzzlePieceItem="userPuzzlePiece.PuzzlePiece"
+                                 ShowColour="showColour"                                 
+                                 CustomCss="@customCss"
+                                 ShowIconLayer=false />
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Counter party puzzle, with receiving puzzle piece  -->
+        @{            
+            <div class="puzzle-container">
+
+                <div class="puzzle puzzle-@initiatingPartyPuzzle.PuzzleSize">
+                    <div class="puzzle-pieces">
+                        @foreach (var userPuzzlePiece in initiatingPartyPuzzle.PuzzlePieces)
+                        {
+                            var highlight = userPuzzlePiece.PuzzlePieceDefinitionId == initiatingParty.PuzzlePieceDefinitionId;
+
+                            var ownedPuzzleDefinition = counterparty.IncomingPuzzleDefinitionPieceDefinitionInventory.PuzzlePieceDefinitionIds.SingleOrDefault(x => x.PuzzlePieceDefinitionId == userPuzzlePiece.PuzzlePieceDefinitionId);                            
+                            var ownedCount = ownedPuzzleDefinition?.Quantity ?? 0;
+                            var showColour = ownedCount > 0 || highlight;
+
+                            var customCss = "";
+
+                            if (highlight)
+                            {
+                                customCss = "counter-party-animate-to show-overlay blue-overlay " + (ownedCount > 0 ? "animate-with-colour" : "animate-without-colour");
+                            }
+
+                            <PuzzlePiece ImageUrl="@userPuzzlePiece.PuzzlePiece?.ImageUrl"
+                                 PuzzlePieceItem="userPuzzlePiece.PuzzlePiece"
+                                 ShowColour="showColour"                                 
+                                 CustomCss="@customCss"
+                                 ShowIconLayer=false />
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>

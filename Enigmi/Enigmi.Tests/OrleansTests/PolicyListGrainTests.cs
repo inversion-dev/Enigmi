@@ -47,7 +47,7 @@ public class PolicyListGrainTests
                 return puzzleDetail!.PuzzlePolicy.PolicyId != null;
             });
             
-            var grain = ClusterClient.GetGrain<IPolicyListGrain>(0);
+            var grain = ClusterClient.GetGrain<IPolicyListGrain>(Constants.SingletonGrain);
             var policies = await grain.GetPolicies();
             policies.Count().Should().BeGreaterThan(0);
             var policyForCollection = policies.FirstOrDefault(x => x.PuzzleCollectionId == createdPuzzleCollectionId);

@@ -1,0 +1,72 @@
+﻿@using Enigmi.Blazor.Components.OfferList
+@using Enigmi.Blazor.Components.Tooltip
+
+@if (ActiveTradesManager.OffersReceived == null || ActiveTradesManager.OffersMade == null)
+{
+    return;
+}
+
+<div class="offers-panel-header">
+    <div class="btn-group btn-group-sm" role="group" aria-label="Default button group">
+        <button type="button" class="btn btn-outline-dark @(ActiveTab == TradePanelTab.OffersReceived ? "active" : "")"
+                @onclick="() => SetActiveTab(TradePanelTab.OffersReceived)">
+            <Tooltip CustomCss="left-bottom" Text="<b>Offers Received</b><br>All offers that other users have made on your puzzle pieces. Offers received from offline users are displayed at the end of the list.">
+                <div class="panel-tab-button">
+                    @if (UnseenOffersCount > 0)
+                    {
+                        <span class="circle-number red-circle offers-received-circle">@UnseenOffersCount</span>
+                    }
+                    <div class="panel-tab-button-label">
+                        <div>Offers</div>
+                        <div>Received</div>
+                    </div>
+                    <span class="badge text-bg-light">@ActiveTradesManager.OffersReceived.Count</span>
+                </div>
+            </Tooltip>
+        </button>
+        <button type="button" class="btn btn-outline-dark @(ActiveTab == TradePanelTab.OffersMade ? "active" : "")" @onclick="() => SetActiveTab(TradePanelTab.OffersMade)">
+            <Tooltip CustomCss="left-bottom" Text="<b>Offers Made</b><br>All offers that you have made on puzzle pieces owned by other users. Offers made to offline users are displayed at the end of the list.">
+                <div class="panel-tab-button">
+                    @if (InitiatingSignTradeCountdown > 0)
+                    {
+                        <span class="circle-number red-circle circle-number-countdown">@InitiatingSignTradeCountdown</span>
+                    }
+                    <div class="panel-tab-button-label">
+                        <div>Offers</div>
+                        <div>Made</div>
+                    </div>
+                    <span class="badge text-bg-light">@ActiveTradesManager.OffersMade.Count</span>
+                </div>
+            </Tooltip>
+        </button><button type="button" class="btn btn-outline-dark @(ActiveTab == TradePanelTab.TradeHistory ? "active" : "")" @onclick="() => SetActiveTab(TradePanelTab.TradeHistory)">
+            <Tooltip CustomCss="left-bottom" Text="<b>Trade History</b><br>All completed trades with offers made/received by you are listed here.">
+                <div class="panel-tab-button">
+                    <div class="panel-tab-button-label">
+                        <div>Trade</div>
+                        <div>History</div>
+                    </div>
+                    <span class="badge text-bg-light">0</span>
+                </div>
+            </Tooltip>
+        </button>
+    </div>
+
+    @if (ActiveTab == TradePanelTab.OffersMade)
+    {
+        <OfferList Trades="ActiveTradesManager.OffersMade"
+               IsLoading=ActiveTradesManager.IsLoading
+               OfflineStakingAddresses=OfflineStakingAddresses
+               ViewMode="Shared.Models.ViewMode.OffersMade">
+        </OfferList>
+    }
+    else if (ActiveTab == TradePanelTab.OffersReceived)
+    {
+        <OfferList Trades="ActiveTradesManager.OffersReceived"
+               IsLoading=ActiveTradesManager.IsLoading
+               OfflineStakingAddresses=OfflineStakingAddresses
+               ViewMode="Shared.Models.ViewMode.OffersReceived">
+        </OfferList>
+    }
+</div>
+
+

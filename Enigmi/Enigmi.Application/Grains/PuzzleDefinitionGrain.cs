@@ -244,17 +244,17 @@ public class PuzzleDefinitionGrain : GrainBase<PuzzleDefinition>, IPuzzleDefinit
         await puzzlePieceDispenserGrain.AddStock(puzzleDefinition.PuzzlePieceIds);
     }
 
-    public override string ResolveSubscriptionName(DomainEvent @event)
+    public override IEnumerable<string> ResolveSubscriptionNames(DomainEvent @event)
     {
         @event.ThrowIfNull();
         State.DomainAggregate.ThrowIfNull();
 
-        string subscriptionName = @event switch
+        var subscriptionNames = @event switch
         {
-            PuzzleDefinitionPublished => State.DomainAggregate.PuzzleCollectionId.ToString(),
-            _ => string.Empty,
+            PuzzleDefinitionPublished => State.DomainAggregate.PuzzleCollectionId.ToString().ToSingletonList(),
+            _ => string.Empty.ToSingletonList(),
         };
 
-        return subscriptionName;
+        return subscriptionNames;
     }
 }

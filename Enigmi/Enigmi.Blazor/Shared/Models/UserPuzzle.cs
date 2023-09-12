@@ -6,7 +6,7 @@ public class UserPuzzle
 {
     public Guid Id { get; private set; }
 
-    public Guid PuzzleId { get; private set; }
+    public Guid PuzzleId { get; }
 
     public string PuzzleTitle { get; private set; }
 
@@ -18,8 +18,8 @@ public class UserPuzzle
 
     public int NumberOfAllowedBuilds { get; private set; }
 
-    public int NumberOfCompletedBuilds { get; private set; }
-    
+    public int NumberOfCompletedBuilds { get; private set; }    
+
     public UserPuzzle(Guid id,
         Guid puzzleId,
         string puzzleTitle,
@@ -37,5 +37,18 @@ public class UserPuzzle
         NumberOfCompletedBuilds = numberOfCompletedBuilds.ThrowIf(x => x < 0, "Must be equal or larger than 0");
         PuzzleSize = puzzleSize.ThrowIf(x => x < 1, "Must be larger than 0");
         PuzzlePieces = puzzlePieces.ThrowIfNull();
+    }
+}
+
+public class UserPuzzleComparer : IEqualityComparer<UserPuzzle>
+{
+    public bool Equals(UserPuzzle? x, UserPuzzle? y)
+    {
+        return (x?.PuzzleId ?? Guid.Empty) == (y?.PuzzleId ?? Guid.Empty);
+    }
+
+    public int GetHashCode(UserPuzzle obj)
+    {
+        return obj.PuzzleId.GetHashCode();
     }
 }

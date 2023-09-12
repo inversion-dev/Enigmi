@@ -46,7 +46,7 @@ public class OrderGrainTests
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
                     Constants.LovelaceTokenAssetId, Convert.ToUInt64(0.5 * Constants.LovelacePerAda))
-            }));
+            }, "aaa"));
 
             var command = new CreateOrderCommand(
                 "addr_test1qpvmvsa2lqvl3y79rl9qm87e03uf48u7s4ecpenluppqvv73nadmqahcncugv7qfxlnmneyw4alky6w9kg0setjkpeuqz297u8"
@@ -64,7 +64,7 @@ public class OrderGrainTests
             var (puzzleCollection, puzzleSize) = await GetPuzzleCollectionDetails();
             var userWalletGrain = ClusterClient.GetGrain<IUserWalletGrain>("stake_address_order1");
 
-            var grainSettingsGrain = ClusterClient.GetGrain<IGrainSettingsGrain>(0);
+            var grainSettingsGrain = ClusterClient.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
             var settings = await grainSettingsGrain.GetSettings();
             settings.OrderGrain.OrderExpiresTimespan = TimeSpan.FromSeconds(2);
             await grainSettingsGrain.UpdateSettings(settings);
@@ -74,7 +74,7 @@ public class OrderGrainTests
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
                     Constants.LovelaceTokenAssetId, Convert.ToUInt64(10 * Constants.LovelacePerAda))
-            }));
+            }, "aaa"));
 
             var command = new CreateOrderCommand(
                 "addr_test1qpvmvsa2lqvl3y79rl9qm87e03uf48u7s4ecpenluppqvv73nadmqahcncugv7qfxlnmneyw4alky6w9kg0setjkpeuqz297u8"
@@ -132,7 +132,7 @@ public class OrderGrainTests
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
                     Constants.LovelaceTokenAssetId, Convert.ToUInt64(10 * Constants.LovelacePerAda))
-            }));
+            },"aaa"));
 
             var command = new CreateOrderCommand(
                 "addr_test1qpvmvsa2lqvl3y79rl9qm87e03uf48u7s4ecpenluppqvv73nadmqahcncugv7qfxlnmneyw4alky6w9kg0setjkpeuqz297u8"
@@ -186,7 +186,7 @@ public class OrderGrainTests
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
                     Constants.LovelaceTokenAssetId, 10 * Constants.LovelacePerAda)
-            }));
+            }, "aaa"));
 
             var command = new CreateOrderCommand(
                 "addr_test1qpvmvsa2lqvl3y79rl9qm87e03uf48u7s4ecpenluppqvv73nadmqahcncugv7qfxlnmneyw4alky6w9kg0setjkpeuqz297u8"
@@ -220,7 +220,7 @@ public class OrderGrainTests
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
                     Constants.LovelaceTokenAssetId, 10 * Constants.LovelacePerAda)
-            }));
+            }, "aaa"));
 
             var command = new CreateOrderCommand(
                 "addr_test1qpvmvsa2lqvl3y79rl9qm87e03uf48u7s4ecpenluppqvv73nadmqahcncugv7qfxlnmneyw4alky6w9kg0setjkpeuqz297u8"
@@ -287,7 +287,7 @@ public class OrderGrainTests
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
                     Constants.LovelaceTokenAssetId, 10 * Constants.LovelacePerAda)
-            }));
+            }, "aaa"));
 
             var command = new CreateOrderCommand(
                 "addr_test1qpvmvsa2lqvl3y79rl9qm87e03uf48u7s4ecpenluppqvv73nadmqahcncugv7qfxlnmneyw4alky6w9kg0setjkpeuqz297u8"

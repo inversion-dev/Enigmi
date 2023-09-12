@@ -181,14 +181,9 @@ public partial class BuyPuzzlePiece : IDisposable
 
     private async Task<bool> RetrieveBoughtPuzzlePieces()
     {
-        BoughtPuzzlePieces.Clear();
-        var stakeAddress = await WalletConnection.GetRewardAddress();
-        if (stakeAddress == null)
-        {
-            return false;
-        }
+        BoughtPuzzlePieces.Clear();       
         
-        var walletState = await ApiClient.SendAsync(new GetStateRequest(stakeAddress.ToString(), ActiveOrderId));
+        var walletState = await ApiClient.SendAsync(new GetStateRequest(WalletConnection.SelectedStakingAddress, ActiveOrderId));
         if (walletState != null)
         {
             var puzzlePieceModels = walletState.PuzzlePieces.Select(x =>
@@ -225,16 +220,10 @@ public partial class BuyPuzzlePiece : IDisposable
     private async Task LoadActiveOrder()
     {
         ViewMode = ViewModeOption.Loading;
-        StateHasChanged();
+        StateHasChanged();       
         
-        var rewardAddress = await WalletConnection.GetRewardAddress();
-        if (rewardAddress == null)
-        {
-            ResetBuyState();
-            return;
-        }
 
-        var activeOrderResponse = await ApiClient.SendAsync(new GetActiveOrderRequest(rewardAddress.ToString()));
+        var activeOrderResponse = await ApiClient.SendAsync(new GetActiveOrderRequest(WalletConnection.SelectedStakingAddress));
         if (activeOrderResponse == null)
         {
             ResetBuyState();
@@ -307,8 +296,6 @@ public partial class BuyPuzzlePiece : IDisposable
     {
         // TODO: get via service
         LeftoverPuzzlePieces.Clear();
-        LeftoverPuzzlePieces.AddRange(ApiClient.PuzzlesPieces.Where(x => x.PuzzleDefinitionId == new Guid("443a6f09-4d05-4fd5-894e-3b22dd4e39be")));
-
         StateHasChanged();
 
         await Task.CompletedTask.ContinueOnAnyContext();
@@ -353,13 +340,8 @@ public partial class BuyPuzzlePiece : IDisposable
             return;
         }
 
-        var stakeAddress = await WalletConnection.GetRewardAddress();
-        if (stakeAddress == null)
-        {
-            return;
-        }
 
-        var response = await PlaceOrder(stakeAddress);
+        var response = await PlaceOrder(WalletConnection.SelectedStakingAddress);
         if (response == null)
         {
             ResetBuyState();
@@ -373,7 +355,7 @@ public partial class BuyPuzzlePiece : IDisposable
 
         try
         {
-            await ApproveOrder(response, stakeAddress);
+            await ApproveOrder(response, WalletConnection.SelectedStakingAddress);
         }
         catch (Exception ex)
         {
@@ -384,17 +366,20 @@ public partial class BuyPuzzlePiece : IDisposable
         StateHasChanged();
     }
 
-    private async Task<CreateOrderResponse?> PlaceOrder(Address stakeAddress)
+    private async Task<CreateOrderResponse?> PlaceOrder(string stakingAddress)
     {
         var paymentAddress = await WalletConnection.WalletConnector!.GetChangeAddress();
         var response = await ApiClient.SendAsync(
             new CreateOrderCommand(
-                paymentAddress.ToString(),
-                stakeAddress.ToString(),
+                stakingAddress,
                 SelectedPuzzleCollectionId!.Value, 
                 PuzzleSize, 
                 Quantity)
+            {
+                PaymentAddress = paymentAddress.ToString()
+            }
             );
+        
 
         if (response == null)
         {
@@ -412,13 +397,13 @@ public partial class BuyPuzzlePiece : IDisposable
         return response;
     }
 
-    private async Task ApproveOrder(CreateOrderResponse response, Address stakeAddress)
+    private async Task ApproveOrder(CreateOrderResponse response, string stakingAddress)
     {
         try
         {
             OnShowScreenBlockerEvent.Trigger("Please sign the message using your web wallet");
             var witnessSet = await WalletConnection.WalletConnector!.SignTxCbor(response.UnsignedTransactionCborHex!, true);
-            var approveResponse = await ApiClient.SendAsync(new ApproveOrderCommand(stakeAddress.ToString(), response.OrderId, witnessSet));
+            var approveResponse = await ApiClient.SendAsync(new ApproveOrderCommand(stakingAddress, response.OrderId, witnessSet));
 
             if (approveResponse == null)
             {

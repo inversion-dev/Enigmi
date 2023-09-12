@@ -26,7 +26,8 @@ public class Settings
 
     public class BlobstorageConfigSettings
     {
-        public string BlobStorageHost { get; set; } = "";
+        public string RootUrl { get; set; } = "";
+        public string CustomDomainRootUrl { get; set; } = "";
         public string ConnectionString { get; set; } = "";
     }
 

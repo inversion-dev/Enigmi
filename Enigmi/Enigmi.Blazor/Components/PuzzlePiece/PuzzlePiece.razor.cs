@@ -1,8 +1,7 @@
 ﻿using Enigmi.Blazor.Utils;
 using Enigmi.Common;
-using Enigmi.Messages.ActivePuzzlePieceList;
 using Microsoft.AspNetCore.Components;
-using System.Reflection;
+using Enigmi.Blazor.Events;
 using Models = Enigmi.Blazor.Shared.Models;
 
 namespace Enigmi.Blazor.Components.PuzzlePiece;
@@ -12,11 +11,14 @@ public partial class PuzzlePiece
     [Parameter, EditorRequired]
     public Models.PuzzlePiece PuzzlePieceItem { get; set; } = null!;
 
+    [Inject] 
+    public OnRequestPotentialTradeListEvent OnRequestPotentialTradeListEvent { get; set; } = null!;
+
     [Parameter]
     public bool ShowOfferIcon { get; set; } = false;
 
     [Parameter]
-    public bool ShowDuplicateIcon { get; set; } = false;
+    public int OwnedPuzzlePieceCount { get; set; } = 0;
 
     [Parameter]
     public string? ImageUrl { get; set; }
@@ -25,7 +27,7 @@ public partial class PuzzlePiece
     public bool Selected { get; set; } = false;
 
     [Parameter]
-    public bool IsOwned { get; set; } = false;
+    public bool ShowColour { get; set; } = false;
 
     [Parameter]
     public bool EnableFindPiece { get; set; } = false;
@@ -33,28 +35,43 @@ public partial class PuzzlePiece
     [Parameter]
 	public EventCallback OnPuzzlePieceClicked { get; set; }
 
+    [Parameter]
+    public bool ShowIconLayer { get; set; } = true;
+
+    [Parameter]
+    public string CustomCss { get; set; } = string.Empty;
+
     [Inject]
     public ApiClient ApiClient { get; set; } = null!;    
 
     [Inject]
     public WalletConnection WalletConnection { get; set; } = null!;
 
-
-    private bool ShowIconlayer => ShowOfferIcon || ShowDuplicateIcon;
+    private bool ShowFindPieceButton { get; set; } = false;
 
     private async Task PuzzlePieceClicked()
     {
         await OnPuzzlePieceClicked.InvokeAsync().ContinueOnAnyContext();
     }  
 
-    private async Task FindPiece()
+    private Task FindPiece()
     {
-        var stakingAddress = await WalletConnection.GetRewardAddress();
-        if (stakingAddress == null)
+        if (!EnableFindPiece || PuzzlePieceItem.AvailablePuzzlePieceCount == 0)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        var tradeResponse = await this.ApiClient.SendAsync(new GetPotentialTradesRequest(stakingAddress.ToString(), PuzzlePieceItem.Id));
+        OnRequestPotentialTradeListEvent.Trigger(PuzzlePieceItem.Id);
+        return Task.CompletedTask;
+    }
+
+    private void MouseEnter()
+    {
+        ShowFindPieceButton = EnableFindPiece;
+    }
+
+    private void MouseLeave()
+    {
+        ShowFindPieceButton = false;
     }
 }

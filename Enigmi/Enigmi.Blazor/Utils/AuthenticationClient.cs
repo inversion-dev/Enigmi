@@ -8,7 +8,6 @@ using Enigmi.Blazor.Events;
 using Enigmi.Common;
 using Enigmi.Common.Messaging;
 using Enigmi.Messages.UserWallet;
-using Microsoft.AspNetCore.Components;
 
 namespace Enigmi.Blazor.Utils;
 
@@ -17,16 +16,19 @@ public class AuthenticationClient : IDisposable
     public IToastService ToastService { get; }
 
     private OnUnblockScreenRequestedEvent OnUnblockScreenRequestedEvent { get; }
-
     
     public OnShowScreenBlockerEvent OnShowScreenBlockerEvent { get; }
 
     private HttpClient Http { get; }
+
     private ClientAppSettings ClientAppSettings { get; }
+
     private ILocalStorageService LocalStorageService { get; }
+
     private WalletConnection WalletConnectorService { get; }
     
     private bool IsAuthenticating { get; set; }
+
     private object IsReconnectingLock { get; } = new object();
 
     private bool _isAuthenticated = false;
@@ -43,8 +45,11 @@ public class AuthenticationClient : IDisposable
     }
 
     public event EventHandler? OnAuthenticationStateChanged;
+
     public event EventHandler? OnAuthenticationStarted;
+
     public event EventHandler? OnAuthenticationCompleted;
+
 
     public AuthenticationClient(WalletConnection walletConnection, 
         ILocalStorageService localStorageService, 
@@ -104,19 +109,25 @@ public class AuthenticationClient : IDisposable
         {
             return;
         }
-        
-        var token = await LocalStorageService.GetItemAsync<string?>(Constants.JwtToken);
-        if (!string.IsNullOrEmpty(token))
-        {
-            IsAuthenticated = true;
-            return;
-        }
 
         if (WalletConnectorService.WalletConnector == null)
         {
             ToastService.ShowError("Wallet connector not set");
             return;
         }
+
+        var token = await LocalStorageService.GetItemAsync<string?>(Constants.JwtToken);
+        if (!string.IsNullOrEmpty(token))
+        {
+            var stakingAddressSet = await WalletConnectorService.SetStakingAddress();
+            if (!stakingAddressSet)
+            {
+                return;
+            }
+
+            IsAuthenticated = true;
+            return;
+        }        
 
         lock (IsReconnectingLock)
         {
@@ -151,6 +162,12 @@ public class AuthenticationClient : IDisposable
             var response = await SendAuthenticateCommand(hexAddress, payload, signature);
             if (response != null)
             {
+                var stakingAddressSet = await WalletConnectorService.SetStakingAddress();
+                if (!stakingAddressSet)
+                {
+                    return;
+                }
+
                 await LocalStorageService.SetItemAsync(Constants.JwtToken, response.Token);
                 IsAuthenticated = true;
             }

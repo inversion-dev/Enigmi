@@ -1,7 +1,9 @@
 ﻿using Enigmi.Common;
+using System.Diagnostics;
 
 namespace Enigmi.Blazor.Shared.Models;
 
+[DebuggerDisplay("{PuzzlePieceDefinitionId}")]
 public class UserPuzzlePiece
 { 
     public Guid PuzzlePieceDefinitionId { get; private set; }
