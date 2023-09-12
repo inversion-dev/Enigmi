@@ -1,5 +1,5 @@
 # Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+Enigmi - an advanced open-source .Net solution delivering an enterprise-level platform for the minting, burning and real-time trading of NFTs. Facilitating online multiplayer engagement, gamification and social interaction, designed to perform at scale.
 
 # Getting Started
 TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
