@@ -11,6 +11,7 @@ using Enigmi.Common.Utils;
 using Enigmi.Domain.Utils;
 using Enigmi.Domain.ValueObjects;
 using Newtonsoft.Json;
+using Utxo = CardanoSharp.Wallet.Models.Utxo;
 
 namespace Enigmi.Domain.Entities.TradeAggregate;
 
@@ -33,6 +34,10 @@ public class BlockchainTransaction
     
 	[JsonProperty]
 	public string? SignedTransactionCborHex { get; private set; }
+	
+	public List<Utxo>? CounterPartyUsedUtxos { get; set; }
+
+	public List<Utxo>? InitiatingPartyUsedUtxos { get; set; }
 	
 	public ResultOrError<Enigmi.Constants.Unit> SignByInitiatingParty(string initiatingPartyWitnessCborHex)
 	{
@@ -69,8 +74,8 @@ public class BlockchainTransaction
 		UtxoAsset initiatingPuzzlePieceAsset,
 		UtxoAsset counterpartyPuzzlePieceAsset)
 	{
-		initiatingWalletAvailableAssets.ThrowIfNullOrEmpty();
-		counterpartyWalletAvailableAssets.ThrowIfNullOrEmpty();
+		initiatingWalletAvailableAssets.ThrowIfNull();
+		counterpartyWalletAvailableAssets.ThrowIfNull();
 		initiatingAddress.ThrowIfNull();
 		counterAddress.ThrowIfNull();
 		networkParams.ThrowIfNull();
@@ -119,6 +124,9 @@ public class BlockchainTransaction
 			transactionBodyBuilder = transactionBodyBuilder.AddInput(utxo.TxHash, utxo.TxIndex);
 		}
 		
+		InitiatingPartyUsedUtxos = initiatingUtxos;
+		CounterPartyUsedUtxos = counterPartyUtxos;
+		
 		transactionBodyBuilder.AddOutput(initiatingAddress, initiatingLoveLaceTotal, initiatingBundleBuilder);
 		transactionBodyBuilder.AddOutput(counterAddress, counterPartyLoveLaceTotal, counterpartyBundleBuilder);
 		var transaction = BuildTransactionWithFee(transactionBodyBuilder, networkParams, null, null);
@@ -129,14 +137,25 @@ public class BlockchainTransaction
 
 		return new Enigmi.Constants.Unit().ToSuccessResponse();
 	}
-    
-    private static ResultOrError<List<CardanoSharp.Wallet.Models.Utxo>> GetUtxosToUse(UtxoAsset initiatingPuzzlePieceAsset, List<CardanoSharp.Wallet.Models.Utxo> initiatingWalletUtxos,
+
+	private static ResultOrError<List<CardanoSharp.Wallet.Models.Utxo>> GetUtxosToUse(UtxoAsset initiatingPuzzlePieceAsset, List<CardanoSharp.Wallet.Models.Utxo> initiatingWalletUtxos,
 	    decimal oneAdaLovelacePlusBuffer)
     {
 	    var initiatingUtxos = new List<CardanoSharp.Wallet.Models.Utxo>();
+
+	    if (!initiatingWalletUtxos.Any())
+	    {
+		    return "Not enough funds to complete the transaction".ToFailedResponse<List<CardanoSharp.Wallet.Models.Utxo>>();
+	    }
+	    
 	    var initiatingUtxoMustBeIncluded = initiatingWalletUtxos
-		    .Single(x =>
+		    .SingleOrDefault(x =>
 			    x.TxHash == initiatingPuzzlePieceAsset.TxId && x.TxIndex == initiatingPuzzlePieceAsset.OutputIndexOnTx);
+
+	    if (initiatingUtxoMustBeIncluded == null)
+	    {
+		    return "Utxo containing the required asset is not available".ToFailedResponse<List<CardanoSharp.Wallet.Models.Utxo>>();
+	    }
 
 	    initiatingUtxos.Add(initiatingUtxoMustBeIncluded);
 

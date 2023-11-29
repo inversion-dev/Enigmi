@@ -10,10 +10,13 @@ using Enigmi.Domain.Entities.OrderAggregate.Events;
 using Enigmi.Domain.Entities.PolicyListAggregate;
 using Enigmi.Domain.Entities.PolicyListAggregate.ValueObjects;
 using Enigmi.Domain.Entities.PuzzlePieceDispenserAggregate;
+using Enigmi.Domain.Entities.TradeAggregate.Events;
 using Enigmi.Domain.Entities.UserWalletAggregate;
 using Enigmi.Domain.Entities.UserWalletAggregate.Events;
+using Enigmi.Domain.Utils;
 using Enigmi.Grains.Shared.ActivePuzzlePieceList;
 using Enigmi.Grains.Shared.ActivePuzzlePieceList.Messages;
+using Enigmi.Grains.Shared.ActiveUtxoReservationsList;
 using Enigmi.Grains.Shared.Order;
 using Enigmi.Grains.Shared.Order.Messages;
 using Enigmi.Grains.Shared.PolicyCollection;
@@ -33,6 +36,7 @@ using Microsoft.Extensions.Logging;
 using Orleans.Providers;
 using ApplicationException = Enigmi.Common.Exceptions.ApplicationException;
 using ConnectUserCommand = Enigmi.Grains.Shared.UserWallet.Messages.ConnectUserCommand;
+using OrderCompleted = Enigmi.Domain.Entities.OrderAggregate.Events.OrderCompleted;
 using UpdateUserWalletStateCommand = Enigmi.Grains.Shared.UserWallet.Messages.UpdateUserWalletStateCommand;
 
 namespace Enigmi.Application.UserWallet;
@@ -70,11 +74,57 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
 
         await Subscribe<UserWalletWentOffline>(this.GetPrimaryKeyString(), OnUserWalletWentOffline);
         await Subscribe<OrderCancelled>(this.GetPrimaryKeyString(), OnOrderCancelled);
-        
+        await Subscribe<OrderCompleted>(this.GetPrimaryKeyString(), OnOrderCompleted);
+        await Subscribe<OrderSubmissionFailed>(this.GetPrimaryKeyString(), OnOrderSubmissionFailed);
+
+        await Subscribe<TradeCancelled>(this.GetPrimaryKeyString(), OnTradeCancelled);
+        await Subscribe<TradeCompleted>(this.GetPrimaryKeyString(), OnTradeCompleted);
+        await Subscribe<TradeBlockchainSubmissionFailed>(this.GetPrimaryKeyString(), OnTradeBlockchainSubmissionFailed);
+
         var userWalletActiveTradeListGrain = GrainFactory.GetGrain<IUserWalletActiveTradeListGrain>(State.DomainAggregate.StakingAddress);        
         await userWalletActiveTradeListGrain.Create();
 
         await base.OnActivateAsync(cancellationToken);
+    }
+
+    private async Task OnTradeBlockchainSubmissionFailed(TradeBlockchainSubmissionFailed @event)
+    {
+        @event.ThrowIfNull();
+        State.DomainAggregate.ThrowIfNull();
+        State.DomainAggregate.ReleaseUtxoReservations(State.DomainAggregate.GetReserveByKey(Reserver.Trade, @event.TradeId));
+        await WriteStateAsync();
+    }
+
+    private async Task OnTradeCompleted(TradeCompleted @event)
+    {
+        @event.ThrowIfNull();
+        State.DomainAggregate.ThrowIfNull();
+        State.DomainAggregate.ReleaseUtxoReservations(State.DomainAggregate.GetReserveByKey(Reserver.Trade, @event.TradeId));
+        await WriteStateAsync();
+    }
+
+    private async Task OnTradeCancelled(TradeCancelled @event)
+    {
+        @event.ThrowIfNull();
+        State.DomainAggregate.ThrowIfNull();
+        State.DomainAggregate.ReleaseUtxoReservations(State.DomainAggregate.GetReserveByKey(Reserver.Trade, @event.TradeId));
+        await WriteStateAsync();
+    }
+
+    private async Task OnOrderCompleted(OrderCompleted @event)
+    {
+        @event.ThrowIfNull();
+        State.DomainAggregate.ThrowIfNull();
+        State.DomainAggregate.ReleaseUtxoReservations(State.DomainAggregate.GetReserveByKey(Reserver.Order, @event.OrderId));
+        await WriteStateAsync();
+    }
+    
+    private async Task OnOrderSubmissionFailed(OrderSubmissionFailed @event)
+    {
+        @event.ThrowIfNull();
+        State.DomainAggregate.ThrowIfNull();
+        State.DomainAggregate.ReleaseUtxoReservations(State.DomainAggregate.GetReserveByKey(Reserver.Order, @event.OrderId));
+        await WriteStateAsync();
     }
 
     private async Task OnOrderCancelled(OrderCancelled @event)
@@ -96,7 +146,7 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
 
         var dispenserGrain = GrainFactory.GetGrain<IPuzzlePieceDispenserGrain>(PuzzlePieceDispenser.GetId(order.OrderPuzzleCollectionId!.Value, order.OrderPuzzleSize!.Value));
         await dispenserGrain.Release(@event.OrderId);
-        State.DomainAggregate.OnCancelOrder(@event.OrderId);
+        State.DomainAggregate.ReleaseUtxoReservations(State.DomainAggregate.GetReserveByKey(Reserver.Order, @event.OrderId));
 
         await WriteStateAsync();
     }
@@ -125,6 +175,37 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
     private IClientProxy UserSignalRChannel()
     {
         return SignalRHubContextStore.MessageHubContext!.Clients.Users(new[] { this.GetPrimaryKeyString() });
+    }
+
+    public async Task<ResultOrError<Constants.Unit>> ReserveUtxos(IEnumerable<Utxo> utxosToReserve, IEnumerable<string> reservedAssetFingerprints, string reservedBy)
+    {
+        var activeUtxoReservationsListGrain = GrainFactory.GetGrain<IActiveUtxoReservationsListGrain>(Constants.ActiveUtxoReservationsListGrainKey);
+        await activeUtxoReservationsListGrain.Initialize();
+        
+        State.DomainAggregate.ThrowIfNull();
+        State.DomainAggregate.ReserveUtxos(utxosToReserve, reservedAssetFingerprints, reservedBy);
+        
+        await WriteStateAsync();
+        return new Constants.Unit().ToSuccessResponse();
+    }
+
+    public async Task<ResultOrError<Constants.Unit>> ReleaseUtxoReservations(string reservedBy)
+    {
+        var activeUtxoReservationsListGrain = GrainFactory.GetGrain<IActiveUtxoReservationsListGrain>(Constants.ActiveUtxoReservationsListGrainKey);
+        await activeUtxoReservationsListGrain.Initialize();
+        
+        State.DomainAggregate.ThrowIfNull();
+        State.DomainAggregate.ReleaseUtxoReservations(reservedBy);
+        
+        await WriteStateAsync();
+        return new Constants.Unit().ToSuccessResponse();
+    }
+    
+    public Task<ResultOrError<bool>> DoesUtxoReservationsExist(string reservedBy)
+    {
+        State.DomainAggregate.ThrowIfNull();
+        var exists = State.DomainAggregate.DoesReservationExist(reservedBy);
+        return Task.FromResult(exists.ToSuccessResponse());
     }
 
     public async Task<ResultOrError<CreateOrderResponse>> CreateOrder(CreateOrderCommand command)
@@ -181,16 +262,16 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
             command.PuzzleCollectionId,
             command.PuzzleSize,
             reservationResponseResult.DispensedPuzzlePieceIds.ToList(),
-            State.DomainAggregate.AvailableUtxoAssets.ToList());
+            State.DomainAggregate.UnreservedUtxoAssets.ToList());
 
         var buildOrderResponse = await orderGrain.BuildOrder(buildOrderCommand);
         if (buildOrderResponse.HasErrors)
         {
             return buildOrderResponse.Errors.ToFailedResponse<CreateOrderResponse>();
         }
-
+        
         var response = buildOrderResponse.Result.ThrowIfNull();
-        State.DomainAggregate!.SetActiveOrder(orderId, response.UsedUtxos);
+        State.DomainAggregate!.SetActiveOrder(orderId, response.UsedUtxos, new List<string>());
         Logger.LogInformation(Invariant($"UserWalletGrain: Active Order - {orderId}"));
         await WriteStateAsync();
 
@@ -207,8 +288,7 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
         var orderGrain = GrainFactory.GetGrain<IOrderGrain>(State.DomainAggregate.ActiveOrderId);
         var orderDetail = await orderGrain.GetOrder();
 
-        if (orderDetail.State is OrderState.Completed
-            or OrderState.Cancelled)
+        if (orderDetail.State is OrderState.Completed or OrderState.Cancelled)
         {
             return new GetActiveOrderResponse(null, null, null).ToSuccessResponse();
         }
@@ -340,6 +420,7 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
         var subscriptionNames = @event switch
         {
             UserWalletWentOffline => this.GetPrimaryKeyString().ToSingletonList(),
+            UtxoReservationStateChanged changed => new List<string>{ UtxoUtility.BuildUtxoSubscriptionName(changed.Utxo.TxId, changed.Utxo.OutputIndexOnTx), Constants.ActiveUtxoReservationsListGrainKey}, 
             _ => string.Empty.ToSingletonList(),
         };
 
@@ -417,7 +498,37 @@ public partial class UserWalletGrain : GrainBase<Domain.Entities.UserWalletAggre
 
             var tradeId = Guid.NewGuid();
             var tradeGrain = GrainFactory.GetGrain<ITradeGrain>(tradeId);
-            var tradeResponse = await tradeGrain.CreateTrade(new CreateTradeCommand(potentialTrade));
+
+            var initiatingWalletReservedUtxoAssets = this.State.DomainAggregate.UtxoReservations
+                .Select(x => x.Value)
+                .SelectMany(x => x.Utxos).ToList();
+            
+            var counterpartyUserWalletGrain = GrainFactory.GetGrain<IUserWalletGrain>(potentialTrade.CounterpartyPuzzlePiece.StakingAddress);
+            var counterpartyUserWallet = await counterpartyUserWalletGrain.GetUserWallet();
+            
+            var counterpartyWalletReservedUtxoAssets = counterpartyUserWallet.UtxoReservations
+                .Select(x => x.Value)
+                .SelectMany(x => x.Utxos).ToList();
+            
+            var initiatingPuzzlePieceUtxo = this.State.DomainAggregate.AvailableUtxoAssets.SingleOrDefault(x =>  x.Fingerprint == potentialTrade.InitiatingPiece.PuzzlePieceId);
+            var counterpartyPuzzlePieceUtxo = counterpartyUserWallet.AvailableUtxoAssets.SingleOrDefault(x =>  x.Fingerprint == potentialTrade.CounterpartyPuzzlePiece.PuzzlePieceId);
+
+            if (initiatingPuzzlePieceUtxo == default)
+            {
+                return "Could not determine utxo for initiating puzzle piece".ToFailedResponse<MakeAnOfferResponse>();
+            }
+            
+            if (counterpartyPuzzlePieceUtxo == default)
+            {
+                return "Could not determine utxo for counter party puzzle piece".ToFailedResponse<MakeAnOfferResponse>();
+            }
+            
+            var tradeResponse = await tradeGrain.CreateTrade(new CreateTradeCommand(
+                potentialTrade, 
+                initiatingWalletReservedUtxoAssets, 
+                counterpartyWalletReservedUtxoAssets,
+                new Utxo(initiatingPuzzlePieceUtxo.TxId, initiatingPuzzlePieceUtxo.OutputIndexOnTx).ToSingletonList(),
+                new Utxo(counterpartyPuzzlePieceUtxo.TxId, counterpartyPuzzlePieceUtxo.OutputIndexOnTx).ToSingletonList()));
 
             if (tradeResponse.HasErrors)
             {

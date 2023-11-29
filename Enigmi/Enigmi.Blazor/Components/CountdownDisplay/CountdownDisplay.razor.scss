@@ -1,0 +1,54 @@
+﻿
+$timer-side-length: 40px;
+
+.base-timer {
+    position: relative;
+    height: $timer-side-length;
+    width: $timer-side-length;
+}
+
+.base-timer__circle {
+  fill: none;
+  stroke: none;
+}
+
+.base-timer__path-elapsed {
+  stroke-width: 10px;
+  stroke: grey;
+}
+
+.base-timer__label {
+    position: absolute;
+    width: $timer-side-length;
+    height: $timer-side-length;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+}
+
+.base-timer__path-remaining.green {
+  color: green;
+}
+
+.base-timer__path-remaining.orange {
+  color: orange;
+}
+
+.base-timer__path-remaining.red {
+  color: red;
+}
+
+.base-timer__path-remaining {  
+  stroke-width: 10px;  
+  stroke-linecap: round;
+  transform: rotate(90deg);
+  transform-origin: center;
+  transition: 1s linear all;
+  stroke: currentColor;
+}
+
+.base-timer__svg {  
+  transform: scaleX(-1);
+}

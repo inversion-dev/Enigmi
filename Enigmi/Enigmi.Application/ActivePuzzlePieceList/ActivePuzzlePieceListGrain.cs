@@ -8,6 +8,7 @@ using Enigmi.Domain.Utils;
 using Enigmi.Domain.ValueObjects;
 using Enigmi.Grains.Shared.ActivePuzzlePieceList;
 using Enigmi.Grains.Shared.ActivePuzzlePieceList.Messages;
+using Enigmi.Grains.Shared.ActiveUtxoReservationsList;
 using Enigmi.Grains.Shared.GrainSettings;
 using Enigmi.Grains.Shared.PuzzleCollection;
 using Enigmi.Grains.Shared.PuzzleDefinition;
@@ -250,6 +251,12 @@ public class ActivePuzzlePieceListGrain : GrainBase<Domain.Entities.ActivePuzzle
         var puzzleDefinitionIds = walletPuzzlePieces.Select(x => x.PuzzleDefinitionId).Distinct().ToList();
         State.DomainAggregate.ThrowIfNull();
 
+        var stakingAddress = string.Empty;
+        if (walletPuzzlePieces.Any())
+        {
+            stakingAddress = walletPuzzlePieces.First().StakingAddress;
+        }
+
         foreach (var puzzleDefinitionId in puzzleDefinitionIds)
         {
             var puzzleDefinitionData = State.DomainAggregate.PuzzleDefinitionDataDictionary[puzzleDefinitionId];
@@ -269,7 +276,8 @@ public class ActivePuzzlePieceListGrain : GrainBase<Domain.Entities.ActivePuzzle
                     .ToList();
 
                 var requestingOwnerPuzzlePieceIds = activePuzzlePiecesForPieceDefinition
-                    .Where(x => walletPuzzlePieces.Any(p => p.PuzzlePieceId == x.PuzzlePieceId) )
+                    .Where(x => x.StakingAddress == stakingAddress 
+                                && walletPuzzlePieces.Any(p => p.PuzzlePieceId == x.PuzzlePieceId) )
                     .Select(x => x.PuzzlePieceId).ToList();
 
                 puzzlePieces.Add(new GetStateResponse.PuzzlePiece(
@@ -324,17 +332,21 @@ public class ActivePuzzlePieceListGrain : GrainBase<Domain.Entities.ActivePuzzle
         var grainSettingsGrain = GrainFactory.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
         var settings = await grainSettingsGrain.GetSettings();
         
+        var activeUtxoReservationsListGrain = GrainFactory.GetGrain<IActiveUtxoReservationsListGrain>(Constants.ActiveUtxoReservationsListGrainKey);
+        var reservedPuzzlePieces = await activeUtxoReservationsListGrain.GetReservedPuzzlePieces();
+        
         var topTrades = State.DomainAggregate.FindPotentialTrades(
                     initiatingStakingAddress.ThrowIfNullOrWhitespace(), 
                     puzzlePieceDefinitionId.ThrowIfEmpty(),
                     settings.ActivePuzzlePieceList.MaxTradeDetailsReturnCount,
-                    settings.ActivePuzzlePieceList.MaxStakingAddressAddressReturnCount
+                    settings.ActivePuzzlePieceList.MaxStakingAddressAddressReturnCount,
+                    reservedPuzzlePieces
                     );
         
         return new GetPotentialTradeResponse(topTrades);
     }
 
-    public async Task<Domain.ValueObjects.TradeDetail?> GetPotentialTrade(
+    public async Task<TradeDetail?> GetPotentialTrade(
         string initiatingStakingAddress,
         string initiatingPuzzlePieceId,
         string counterpartyPuzzlePieceId,

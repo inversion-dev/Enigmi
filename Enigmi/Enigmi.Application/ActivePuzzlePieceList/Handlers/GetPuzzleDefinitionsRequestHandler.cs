@@ -13,10 +13,11 @@ public class GetPuzzleDefinitionsRequestHandler : Handler<GetPuzzleDefinitionsRe
 
     public GetPuzzleDefinitionsRequestHandler(IClusterClient clusterClient)
     {
-        ClusterClient = clusterClient;
+        ClusterClient = clusterClient.ThrowIfNull();
     }
     public override async Task<ResultOrError<GetPuzzleDefinitionsResponse>> Execute(GetPuzzleDefinitionsRequest request, CancellationToken cancellationToken)
     {
+        request.ThrowIfNull();
         var activePuzzlePieceListGrain = ClusterClient.GetGrain<IActivePuzzlePieceListGrain>(Constants.SingletonGrain);
         var response = await activePuzzlePieceListGrain.GetPuzzleDefinitions(request.PuzzlePieceDefinitionIds);
         

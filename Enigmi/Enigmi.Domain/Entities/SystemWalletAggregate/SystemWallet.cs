@@ -4,11 +4,10 @@ using CardanoSharp.Wallet.Extensions.Models;
 using CardanoSharp.Wallet.Models.Addresses;
 using CardanoSharp.Wallet.Models.Keys;
 using CardanoSharp.Wallet.Utilities;
-using Enigmi.Common.Domain;
 
 namespace Enigmi.Domain.Entities.SystemWalletAggregate;
 
-public class SystemWallet :  DomainEntity
+public class SystemWallet : Wallet
 {
     private Address? _address;
     private string MnemonicPhrase { get; } = "gain equal word blur next erosion virtual swing hammer cruel impulse cook normal yellow travel laptop unknown devote universe meat muscle clay outside dragon";

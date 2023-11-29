@@ -4,8 +4,6 @@ namespace Enigmi.Blazor.Shared.Models;
 
 public class UserPuzzle
 {
-    public Guid Id { get; private set; }
-
     public Guid PuzzleId { get; }
 
     public string PuzzleTitle { get; private set; }
@@ -20,7 +18,7 @@ public class UserPuzzle
 
     public int NumberOfCompletedBuilds { get; private set; }    
 
-    public UserPuzzle(Guid id,
+    public UserPuzzle(
         Guid puzzleId,
         string puzzleTitle,
         string collectionTitle,
@@ -28,8 +26,7 @@ public class UserPuzzle
         int numberOfCompletedBuilds,
         int puzzleSize,
         List<UserPuzzlePiece> puzzlePieces)
-    {
-        Id = id.ThrowIfEmpty();
+    {        
         PuzzleId = puzzleId.ThrowIfEmpty();
         PuzzleTitle = puzzleTitle.ThrowIfNullOrWhitespace();
         CollectionTitle = collectionTitle.ThrowIfNullOrWhitespace();

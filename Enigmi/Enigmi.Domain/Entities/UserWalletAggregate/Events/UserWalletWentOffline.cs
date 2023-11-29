@@ -2,7 +2,4 @@
 
 namespace Enigmi.Domain.Entities.UserWalletAggregate.Events;
 
-public record UserWalletWentOffline() : DomainEvent
-{
-
-}
+public record UserWalletWentOffline() : DomainEvent;

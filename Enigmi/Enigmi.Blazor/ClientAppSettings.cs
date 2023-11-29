@@ -9,6 +9,9 @@ public class ClientAppSettings
         config.ThrowIfNull();
         
         ApiUrl = config[nameof(ApiUrl)]!;
+        CardanoScanUrl = config[nameof(CardanoScanUrl)]!;
     }
     public string ApiUrl { get; init; }
+
+    public string CardanoScanUrl { get; init; }
 }

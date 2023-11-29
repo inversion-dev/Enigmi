@@ -82,7 +82,7 @@
         align-items: center;
     }
 
-    .circle-number-countdown {        
+    .circle-number-countdown {
         width: 30px;
         height: 30px;
     }
@@ -93,5 +93,27 @@
 
     .red-circle {
         color: #bb3a08 !important;
+    }
+
+    .countdown-timer-container {
+        position: absolute;
+        right: -37px;
+    }
+
+    .btn-outline-dark.active {
+        background-color: white;
+        border-color: #737b83;
+        color: black;
+
+        .text-bg-light {
+            color: white !important;
+            background-color: black !important;
+        }
+    }
+
+    .btn-outline-dark {
+        color: white;
+        border-color: #737b83;
+        background-color: #737b83;
     }
 }

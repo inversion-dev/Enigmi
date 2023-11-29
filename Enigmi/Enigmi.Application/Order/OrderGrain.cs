@@ -27,6 +27,7 @@ using Orleans.Providers;
 using Orleans.Runtime;
 using PeterO.Cbor2;
 using ApproveOrderResponse = Enigmi.Grains.Shared.UserWallet.Messages.ApproveOrderResponse;
+using OrderCompleted = Enigmi.Domain.Entities.OrderAggregate.Events.OrderCompleted;
 
 namespace Enigmi.Application.Order;
 
@@ -233,6 +234,8 @@ public class OrderGrain : GrainBase<Domain.Entities.OrderAggregate.Order>, IOrde
         var subscriptionNames = @event switch
         {
             OrderCancelled => State.DomainAggregate.UserWalletId!.ToSingletonList(),
+            OrderCompleted => State.DomainAggregate.UserWalletId!.ToSingletonList(),
+            OrderSubmissionFailed => State.DomainAggregate.UserWalletId!.ToSingletonList(),
             _ => string.Empty.ToSingletonList()
         };
 
@@ -275,7 +278,7 @@ public class OrderGrain : GrainBase<Domain.Entities.OrderAggregate.Order>, IOrde
         await WriteStateAsync();
 
         var userWalletGrain = this.GrainFactory.GetGrain<IUserWalletGrain>(State.DomainAggregate.UserWalletId);
-        await userWalletGrain.SendSignalRMessage(new OrderCompleted(State.DomainAggregate.Id));
+        await userWalletGrain.SendSignalRMessage(new Messages.SignalRMessage.OrderCompleted(State.DomainAggregate.Id));
         await userWalletGrain.UserWalletStateHasChanged();
     }
 

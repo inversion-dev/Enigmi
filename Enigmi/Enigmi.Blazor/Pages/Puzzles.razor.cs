@@ -5,6 +5,7 @@ using Enigmi.Common;
 using Enigmi.Messages.SignalRMessage;
 using Enigmi.Messages.UserWallet;
 using Microsoft.AspNetCore.Components;
+using System.Collections.Generic;
 using static System.FormattableString;
 using Models = Enigmi.Blazor.Shared.Models;
 
@@ -56,7 +57,7 @@ public partial class Puzzles : IDisposable
 
     private List<UserPuzzle> LeftoverPuzzles { get; set; } = new();
 
-    public IDisposable? ActivePuzzlePieceUpdateSubscription { get; private set; }
+    private IDisposable? ActivePuzzlePieceUpdateSubscription { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -91,23 +92,37 @@ public partial class Puzzles : IDisposable
 
         if (existingPiece == null)
         {
-            AvailablePuzzlePieceDefinitions.Add(updatedUserPuzzlePiece);
-            
+            AvailablePuzzlePieceDefinitions.Add(updatedUserPuzzlePiece);            
         }
         else if (message.UtcTimestamp > existingPiece.UtcTimestamp)
         {
             AvailablePuzzlePieceDefinitions.Remove(existingPiece);
             AvailablePuzzlePieceDefinitions.Add(updatedUserPuzzlePiece);
         }
+        else
+        {
+            return;
+        }
 
         var userPuzzle = this.UserPuzzles.SingleOrDefault(x => x.PuzzleId == updatedUserPuzzlePiece.PuzzleDefinitionId);
+        if (userPuzzle == null && message.OwnedPuzzlePieceCount > 0)
+        {
+           var notLoadedPuzzle = this.PuzzleSelectionManager.AllPuzzles.SingleOrDefault(x => x.PuzzleId == updatedUserPuzzlePiece.PuzzleDefinitionId);
+            if (notLoadedPuzzle != null)
+            {
+                userPuzzle = notLoadedPuzzle;
+                this.UserPuzzles.Add(userPuzzle);
+            }
+        }
+
         if (userPuzzle != null)
         {
             var puzzlePiece = userPuzzle.PuzzlePieces.SingleOrDefault(x => x.PuzzlePieceDefinitionId == updatedUserPuzzlePiece.Id);
             if (puzzlePiece != null && puzzlePiece.PuzzlePiece != null)
             {
-                puzzlePiece.SetOwnedCount(message.OwnedPuzzlePieceCount);
+                puzzlePiece.SetOwnedCount(message.OwnedPuzzlePieceCount);                
                 puzzlePiece.PuzzlePiece.UpdateAvailablePuzzlePieceCount(message.PuzzlePieceCount - message.OwnedPuzzlePieceCount);
+                puzzlePiece.PuzzlePiece.UpdateIsOwnd(message.OwnedPuzzlePieceCount > 0);
                 ActivePuzzlePieceUpdatedEvent.Trigger();
             }
         }
@@ -136,15 +151,14 @@ public partial class Puzzles : IDisposable
     }
 
     private async Task GetWalletState()
-    {
-        UserPuzzles.Clear();
-        
+    {   
         if (WalletConnection.WalletConnector == null)
         {
             return;
         }
         
         var stakeAddress = WalletConnection.SelectedStakingAddress;
+        Console.WriteLine("Get wallet state request ...");
         var walletState = await ApiClient.SendAsync(new GetStateRequest(stakeAddress, null));
         if (walletState == null)
         {
@@ -153,6 +167,8 @@ public partial class Puzzles : IDisposable
 
         var ownedPuzzlePieceCount = walletState.PuzzlePieces.Where(x => x.IsOwned).Sum(x => x.OwnedPuzzlePieceIds.Count);
         OnUserWalletStateReceivedEvent.Trigger(ownedPuzzlePieceCount);
+
+        var newPuzzleList = new List<UserPuzzle>();
 
         foreach (var puzzleDefinition in walletState.PuzzleDefinitions)
         {
@@ -172,7 +188,7 @@ public partial class Puzzles : IDisposable
                 userPuzzlePieces.Add(userPuzzlePiece);
             }
 
-            var userPuzzle = new UserPuzzle(Guid.NewGuid(), 
+            var userPuzzle = new UserPuzzle(
                 puzzleDefinition.Id, 
                 puzzleDefinition.Title, 
                 puzzleDefinition.PuzzleCollectionTitle, 
@@ -180,12 +196,14 @@ public partial class Puzzles : IDisposable
                 puzzleDefinition.NumberOfCompletedBuilds, 
                 puzzleDefinition.PuzzleSize, 
                 userPuzzlePieces);
-            
-            UserPuzzles.Add(userPuzzle);
+
+            newPuzzleList.Add(userPuzzle);
         }
 
-        PuzzleSelectionManager.UpdateUserPuzzles(UserPuzzles);
-
+        UserPuzzles.Clear();
+        Console.WriteLine("Refreshed user puzzles");
+        UserPuzzles.AddRange(newPuzzleList);        
+        await PuzzleSelectionManager.UpdateUserPuzzles(UserPuzzles);
         StateHasChanged();
     }
 

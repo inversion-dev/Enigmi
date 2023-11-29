@@ -29,7 +29,12 @@
                         Trade canceled by counterparty going offline
                     </div>
                 }
-                <TradeQuad CountdownValue="countdownValue" TradeDetail="trade.TradeDetails" UserPuzzles="Puzzles" />
+                <TradeQuad 
+                    CountdownValue="countdownValue" 
+                    TradeTimeoutInSeconds="trade.TradeTimeoutInSeconds"  
+                    TradeDetail="trade.TradeDetails" 
+                    ShowLoadingIndicator="trade.State == Domain.ValueObjects.TradeState.Submitted"
+                    UserPuzzles="Puzzles" />
             </div>
         }
     }

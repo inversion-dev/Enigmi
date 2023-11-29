@@ -45,7 +45,9 @@ public class GetActiveTradeListRequestHandler : Handler<GetActiveTradeListReques
                 DateTime.UtcNow, 
                 new GetPotentialTradesResponse.TradeDetail(GetPotentialTradesResponse.TradeParty.ConvertToParty(x.TradeDetail.InitiatingPiece),
                     GetPotentialTradesResponse.TradeParty.ConvertToParty(x.TradeDetail.CounterpartyPuzzlePiece), 
-                    x.TradeDetail.Rating)
+                    x.TradeDetail.Rating
+                    ),
+                x.TradeTimeoutInSeconds
             )).ToList();
     }
 }

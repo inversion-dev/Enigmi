@@ -5,18 +5,15 @@ namespace Enigmi.Domain.Entities.UserWalletAggregate;
 public class UtxoReservation
 {
 	public Guid Id { get; private set; } = Guid.NewGuid();
+	
+	public IEnumerable<Utxo> Utxos { get; private set; } = new List<Utxo>();
+	
+	public IEnumerable<string> AssetFingerPrints { get; private set; } = new List<string>();
 
-	public Utxo Utxo { get; private set; }
-
-	public Reserver Reserver { get; private set; }
-
-	public Guid ReserverId { get; private set; }
-
-	public UtxoReservation(Utxo utxo, Reserver reserver, Guid reserverId)
+	public UtxoReservation(IEnumerable<Utxo> utxos, IEnumerable<string> assetFingerPrints)
 	{
-		Utxo=utxo;
-		Reserver=reserver;
-		ReserverId=reserverId;
+		Utxos = utxos;
+		AssetFingerPrints = assetFingerPrints;
 	}
 }
 

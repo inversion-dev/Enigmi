@@ -1,5 +1,6 @@
 ﻿@using Enigmi.Blazor.Components.OfferList
 @using Enigmi.Blazor.Components.Tooltip
+@using Enigmi.Blazor.Components.CountdownDisplay
 
 @if (ActiveTradesManager.OffersReceived == null || ActiveTradesManager.OffersMade == null)
 {
@@ -29,7 +30,10 @@
                 <div class="panel-tab-button">
                     @if (InitiatingSignTradeCountdown > 0)
                     {
-                        <span class="circle-number red-circle circle-number-countdown">@InitiatingSignTradeCountdown</span>
+                        <div class="countdown-timer-container">
+                            <CountdownDisplay SecondsLeft="InitiatingSignTradeCountdown" TotalSeconds="TradeTimeoutInSeconds"></CountdownDisplay>
+                        </div>
+                        
                     }
                     <div class="panel-tab-button-label">
                         <div>Offers</div>

@@ -90,16 +90,16 @@ public class BlockchainTransactionSubmissionGrain : GrainBase<BlockchainTransact
         await this.UnregisterReminder(reminderReference);
         SyncTransactionTimer?.Dispose();
 
-        Logger.LogInformation(Invariant($"BlockchainTransactionSubmissionGrain: Id - {this.GetGrainId().GetGuidKey()} CancelSyncBlockchainReminderAndSyncTimer"));
+        Logger.LogInformation(Invariant($"BlockchainTransactionSubmissionGrain: SubscriptionKey - {this.GetGrainId().GetGuidKey()} CancelSyncBlockchainReminderAndSyncTimer"));
     }
 
     public async Task<ResultOrError<Constants.Unit>> Submit(
-        Guid orderId,
+        Guid subscriptionKey,
         string signedTransactionCborHex,
         DateTime ttlUtcTimestamp)
     {
         State.DomainAggregate.ThrowIfNull();
-        State.DomainAggregate.SetOrderId(orderId.ThrowIfEmpty());
+        State.DomainAggregate.SetSubscriptionKey(subscriptionKey.ThrowIfEmpty());
         State.DomainAggregate.SetTransactionDetails(signedTransactionCborHex.ThrowIfNullOrWhitespace(), ttlUtcTimestamp.ThrowIfNull());
         await WriteStateAsync();
 
@@ -187,12 +187,12 @@ public class BlockchainTransactionSubmissionGrain : GrainBase<BlockchainTransact
         catch (HttpRequestException ex) when (ex.StatusCode.IsIn(HttpStatusCode.InternalServerError))
         {
             Logger.LogError(ex, "Tx Submission Failure");
-            State.DomainAggregate.MarkAsSubmissionTransientFailure();
+            State.DomainAggregate.MarkAsRejected(settings.OrderBlockchainTransactionSettings.MaxTransientRejectedCount, false);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Tx Submission Exception");
-            State.DomainAggregate.MarkAsSubmissionTransientFailure();
+            State.DomainAggregate.MarkAsRejected(settings.OrderBlockchainTransactionSettings.MaxTransientRejectedCount, false);
         }
     }
 
@@ -205,10 +205,10 @@ public class BlockchainTransactionSubmissionGrain : GrainBase<BlockchainTransact
 
         var subscriptionName = @event switch
         {
-            BlockchainTransactionFailed => State.DomainAggregate.OrderId.ToString().ToSingletonList(),
-            BlockchainTransactionSucceeded => State.DomainAggregate.OrderId.ToString().ToSingletonList(),
-            BlockchainTransactionStateUpdated => State.DomainAggregate.OrderId.ToString().ToSingletonList(),
-            BlockchainTransactionSubmitted => State.DomainAggregate.OrderId.ToString().ToSingletonList(),
+            BlockchainTransactionFailed => State.DomainAggregate.SubscriptionKey.ToString().ToSingletonList(),
+            BlockchainTransactionSucceeded => State.DomainAggregate.SubscriptionKey.ToString().ToSingletonList(),
+            BlockchainTransactionStateUpdated => State.DomainAggregate.SubscriptionKey.ToString().ToSingletonList(),
+            BlockchainTransactionSubmitted => State.DomainAggregate.SubscriptionKey.ToString().ToSingletonList(),
             _ => string.Empty.ToSingletonList()
         };
 

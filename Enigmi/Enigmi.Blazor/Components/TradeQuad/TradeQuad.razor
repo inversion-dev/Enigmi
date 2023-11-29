@@ -1,6 +1,8 @@
 ﻿@using Enigmi.Blazor.Components.PuzzlePiece
 @using Enigmi.Blazor.Components.Tooltip
 @using Enigmi.Blazor.Shared.Models;
+@using Enigmi.Blazor.Components.CountdownDisplay
+@using Enigmi.Blazor.Components.Spinner
 
 @if (UserPuzzles == null || !UserPuzzles.Any())
 {
@@ -23,10 +25,20 @@
 
     @if (this.CountdownValue.HasValue && this.CountdownValue.Value > 0)
     {
-        <div style="position:absolute; right:0">
-            <span class="circle-number red-circle circle-number-countdown">@this.CountdownValue.Value</span>
+        <div class="countdown-outer-container">
+            <div class="countdown-inner-container">
+                <CountdownDisplay SecondsLeft="CountdownValue.Value" TotalSeconds="TradeTimeoutInSeconds"></CountdownDisplay>
+            </div>            
         </div>
-    }   
+    }  
+    @if (ShowLoadingIndicator)
+    {
+        <div class="countdown-outer-container">
+            <div class="countdown-inner-container">
+                <Spinner IsLoading=true></Spinner>
+            </div>
+        </div>
+    }
 
     <div class="view-puzzle-pieces mini-map">
         <!-- owner preview, after gaining puzzle  -->
@@ -108,7 +120,7 @@
         <span>Me</span>
         <div>
             <Tooltip Text="Rating of 10 is very good where 0 will indicate a bad trade">
-                @(string.Format("{0:0.##}", TradeDetail.Rating))
+                @($"{TradeDetail.Rating:0.##}")
             </Tooltip>            
         </div>
         <span>@counterparty.Nickname</span>

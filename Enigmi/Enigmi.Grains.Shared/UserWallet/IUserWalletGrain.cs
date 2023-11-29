@@ -1,5 +1,5 @@
-﻿using Enigmi.Common.Messaging;
-using Enigmi.Domain.Entities.ActivePuzzlePieceListAggregate.ValueObjects;
+﻿using Domain.ValueObjects;
+using Enigmi.Common.Messaging;
 using Enigmi.Grains.Shared.UserWallet.Messages;
 using Orleans.Concurrency;
 
@@ -10,19 +10,15 @@ public interface IUserWalletGrain : IGrainWithStringKey
     Task<ResultOrError<CreateOrderResponse>> CreateOrder(CreateOrderCommand command);
 
     Task<ResultOrError<GetActiveOrderResponse>> GetActiveOrder();
-
-    [AlwaysInterleave]
+    
     Task<ResultOrError<Constants.Unit>> ReplyToClientPing();
-
-    [AlwaysInterleave]
+    
     Task<ResultOrError<UpdateUserWalletStateResponse>> UpdateWalletState(UpdateUserWalletStateCommand command);
-
-    [AlwaysInterleave]
+    
     Task<ResultOrError<ConnectUserResponse>> Connect(ConnectUserCommand command);
 
     Task<Domain.Entities.UserWalletAggregate.UserWallet> GetUserWallet();
-
-    [AlwaysInterleave]
+        
     Task<ResultOrError<ApproveOrderResponse>> ApproveOrder(ApproveOrderCommand approvedOrderCommand);
 
     [AlwaysInterleave]
@@ -39,4 +35,10 @@ public interface IUserWalletGrain : IGrainWithStringKey
     Task<ResultOrError<MakeAnOfferResponse>> MakeAnOffer(MakeAnOfferCommand command);
     
     Task<ResultOrError<GetTradeResponse>> GetActiveTradeList(GetActiveTradeListRequest request);
+
+    Task<ResultOrError<Constants.Unit>> ReserveUtxos(IEnumerable<Utxo> utxosToReserve, IEnumerable<string> reservedAssetFingerprints, string reservedBy);
+
+    Task<ResultOrError<Constants.Unit>> ReleaseUtxoReservations(string reservedBy);
+
+    Task<ResultOrError<bool>> DoesUtxoReservationsExist(string reservedBy);
 }

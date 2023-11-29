@@ -6,6 +6,7 @@ using Domain.ValueObjects;
 using Enigmi.Common;
 using Enigmi.Domain.Entities.OrderAggregate;
 using Enigmi.Domain.Entities.PuzzlePieceDispenserAggregate;
+using Enigmi.Domain.Entities.UserWalletAggregate;
 using Enigmi.Grains.Shared.GrainSettings;
 using Enigmi.Grains.Shared.Order;
 using Enigmi.Grains.Shared.PuzzleCollectionList.Messages;
@@ -45,7 +46,7 @@ public class OrderGrainTests
             await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(new List<UtxoAsset>
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
-                    Constants.LovelaceTokenAssetId, Convert.ToUInt64(0.5 * Constants.LovelacePerAda))
+                    Constants.LovelaceTokenAssetId, Convert.ToUInt64(0.5 * Constants.LovelacePerAda), string.Empty)
             }, "aaa"));
 
             var command = new CreateOrderCommand(
@@ -73,7 +74,7 @@ public class OrderGrainTests
             await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(new List<UtxoAsset>
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
-                    Constants.LovelaceTokenAssetId, Convert.ToUInt64(10 * Constants.LovelacePerAda))
+                    Constants.LovelaceTokenAssetId, Convert.ToUInt64(10 * Constants.LovelacePerAda), string.Empty)
             }, "aaa"));
 
             var command = new CreateOrderCommand(
@@ -88,7 +89,7 @@ public class OrderGrainTests
             var dispenserGrain = ClusterClient.GetGrain<IPuzzlePieceDispenserGrain>(PuzzlePieceDispenser.GetId(puzzleCollection.Id, puzzleSize));
             
             var userWalletBefore = await userWalletGrain.GetUserWallet();
-            var isUtxoReservedAgainstOrderBefore = userWalletBefore.UtxoReservations.Any(x => x.ReserverId == orderId);
+            var isUtxoReservedAgainstOrderBefore = userWalletBefore.UtxoReservations.Any(x => x.Key == userWalletBefore.GetReserveByKey(Reserver.Order,orderId));
             isUtxoReservedAgainstOrderBefore.Should().BeTrue();
 
             var puzzlePieceDispenserBefore = await dispenserGrain.GetPuzzlePieceDispenser();
@@ -108,12 +109,12 @@ public class OrderGrainTests
             await TestUtil.Retry(2, 10, async () =>
             {
                 var userWallet = await userWalletGrain.GetUserWallet();
-                return !userWallet.UtxoReservations.Any(x => x.ReserverId == orderId);
+                return !userWallet.UtxoReservations.Any(x => x.Key == userWallet.GetReserveByKey(Reserver.Order,orderId));
             });
 
             //ensure reserved utxo's has been released
             var userWalletAfter = await userWalletGrain.GetUserWallet();
-            var isUtxoReservedAgainstOrder = userWalletAfter.UtxoReservations.Any(x => x.ReserverId == orderId);
+            var isUtxoReservedAgainstOrder = userWalletAfter.UtxoReservations.Any(x => x.Key == userWalletAfter.GetReserveByKey(Reserver.Order,orderId));
             isUtxoReservedAgainstOrder.Should().BeFalse();
             
             //dispenser should have removed reserved items
@@ -131,7 +132,7 @@ public class OrderGrainTests
             await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(new List<UtxoAsset>
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
-                    Constants.LovelaceTokenAssetId, Convert.ToUInt64(10 * Constants.LovelacePerAda))
+                    Constants.LovelaceTokenAssetId, Convert.ToUInt64(10 * Constants.LovelacePerAda), string.Empty)
             },"aaa"));
 
             var command = new CreateOrderCommand(
@@ -184,8 +185,8 @@ public class OrderGrainTests
             //add funds to user wallet
             await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(new List<UtxoAsset>
             {
-                new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
-                    Constants.LovelaceTokenAssetId, 10 * Constants.LovelacePerAda)
+                new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f61", 1,
+                    Constants.LovelaceTokenAssetId, 10 * Constants.LovelacePerAda, string.Empty)
             }, "aaa"));
 
             var command = new CreateOrderCommand(
@@ -219,7 +220,7 @@ public class OrderGrainTests
             await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(new List<UtxoAsset>
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
-                    Constants.LovelaceTokenAssetId, 10 * Constants.LovelacePerAda)
+                    Constants.LovelaceTokenAssetId, 10 * Constants.LovelacePerAda, string.Empty)
             }, "aaa"));
 
             var command = new CreateOrderCommand(
@@ -286,7 +287,7 @@ public class OrderGrainTests
             await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(new List<UtxoAsset>
             {
                 new UtxoAsset("29ff47baf100ae17e4e137bd79091eb0278e4225095a111ddef1de7fa67c3f6e", 1,
-                    Constants.LovelaceTokenAssetId, 10 * Constants.LovelacePerAda)
+                    Constants.LovelaceTokenAssetId, 10 * Constants.LovelacePerAda, string.Empty)
             }, "aaa"));
 
             var command = new CreateOrderCommand(

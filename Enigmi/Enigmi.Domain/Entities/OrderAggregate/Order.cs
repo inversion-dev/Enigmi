@@ -177,6 +177,7 @@ public class Order : DomainEntity
     public void CompleteOrder()
     {
         State = OrderState.Completed;
+        RaiseEvent(new OrderCompleted(Id));
     }
 
     public void MarkAsSubmitted()
@@ -192,5 +193,6 @@ public class Order : DomainEntity
     public void MarkAsSubmissionFailed()
     {
         State = OrderState.TransactionSubmissionFailed;
+        RaiseEvent(new OrderSubmissionFailed(Id));
     }
 }

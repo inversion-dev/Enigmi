@@ -12,6 +12,7 @@ public record GetActiveTradeListRequest(string StakingAddress) : Request<GetActi
 public record GetActiveTradeListResponse(List<GetActiveTradeListResponse.Trade> OffersMade,
     List<GetActiveTradeListResponse.Trade> OffersReceived) : RequestResponse
 {
-    public record Trade(Guid Id, TradeState State, DateTime? InitiatingPartySignUtcDeadline, DateTime ServerUtcDateTime, GetPotentialTradesResponse.TradeDetail TradeDetails);
+    public record Trade(Guid Id, TradeState State, DateTime? InitiatingPartySignUtcDeadline, DateTime ServerUtcDateTime, GetPotentialTradesResponse.TradeDetail TradeDetails
+    , int TradeTimeoutInSeconds);
 }
 

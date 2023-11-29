@@ -4,12 +4,12 @@ using Enigmi.Common.Messaging;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Blazored.Toast.Services;
+using CardanoSharp.Wallet.CIPs.CIP14.Extensions;
 using Domain.ValueObjects;
 using Enigmi.Blazor.Events;
 using Enigmi.Common.Utils;
 using Enigmi.Messages;
-using static System.FormattableString; 
-using Models = Enigmi.Blazor.Shared.Models;
+using static System.FormattableString;
 
 
 namespace Enigmi.Blazor.Utils;
@@ -135,11 +135,11 @@ public class ApiClient
                 foreach (var asset in utxo.Balance.Assets)
                 {
                     var assetId = CardanoHelper.GetAssetId(asset.PolicyId, asset.Name);
-                    valueObjectsUtxoAssets.Add(new UtxoAsset(utxo.TxHash.ThrowIfNull(), utxo.TxIndex, assetId, (ulong)asset.Quantity));
+                    valueObjectsUtxoAssets.Add(new UtxoAsset(utxo.TxHash.ThrowIfNull(), utxo.TxIndex, assetId, (ulong)asset.Quantity, assetId.ToAssetFingerprint()));
                 }
             }
 
-            valueObjectsUtxoAssets.Add(new UtxoAsset(utxo.TxHash.ThrowIfNull(), utxo.TxIndex, Constants.LovelaceTokenAssetId, utxo.Balance.Lovelaces));
+            valueObjectsUtxoAssets.Add(new UtxoAsset(utxo.TxHash.ThrowIfNull(), utxo.TxIndex, Constants.LovelaceTokenAssetId, utxo.Balance.Lovelaces, string.Empty));
         }
         
         walletStateRequest.PaymentAddress = WalletConnection.PaymentAddress;

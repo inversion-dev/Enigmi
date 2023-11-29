@@ -12,4 +12,4 @@ public record GetTradeRequest(Guid TradeId) : Request<GetTradeResponse>
 public record GetTradeResponse(Trade Trade) : RequestResponse;
 
 public record Trade(Guid Id, GetPotentialTradesResponse.TradeDetail TradeDetail, TradeState TradeState, DateTime? InitiatingPartySignUtcDeadline, 
-    string? TransactionId, DateTime ServerUtcTime, string? UnsignedTransactionCborHex, uint NumberOfConfirmations);
+    string? TransactionId, DateTime ServerUtcTime, string? UnsignedTransactionCborHex, uint NumberOfConfirmations, int ConfirmationsRequired, bool IsAvailable);

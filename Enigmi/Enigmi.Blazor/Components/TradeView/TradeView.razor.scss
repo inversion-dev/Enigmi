@@ -169,7 +169,6 @@
     }
 
     .blockchain-status-box {
-        
     }
 
     .spinner-container {
@@ -180,5 +179,14 @@
             height: 3em;
             text-align: center;
         }
+    }
+
+    .link-overflow {
+        display: inline-block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 100%;
+        width: 50px;
     }
 }

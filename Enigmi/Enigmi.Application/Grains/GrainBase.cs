@@ -114,7 +114,7 @@ public abstract class GrainBase<T> : Grain<DomainGrainState<T>>, IAsyncObserver<
 
     private SubscriptionHandler? GetSubscriptionDetails(DomainEvent item)
     {
-        return _subscriptionHandlers.SingleOrDefault(x => x.DomainType == item.GetType());
+        return _subscriptionHandlers.FirstOrDefault(x => x.DomainType == item.GetType());
     }
 
     public Task OnCompletedAsync()
@@ -181,6 +181,24 @@ public abstract class GrainBase<T> : Grain<DomainGrainState<T>>, IAsyncObserver<
         this.State.ClearStreamSequences();
         await WriteStateAsync();
 
+        return new Constants.Unit().ToSuccessResponse();
+    }
+    
+    public async Task<ResultOrError<Constants.Unit>> Unsubscribe(string subscriptionName)
+    {
+        var streamProvider = this.GetStreamProvider(Constants.StreamProvider);
+        var streamId = StreamId.Create(Constants.StreamNamespace, subscriptionName);
+        var stream = streamProvider.GetStream<DomainEvent>(streamId);
+        var subscriptionHandles = await stream.GetAllSubscriptionHandles();
+        if (subscriptionHandles != null)
+        {
+            foreach (var subscription in subscriptionHandles)
+            {
+                await subscription.UnsubscribeAsync();
+            }
+        }
+
+        await WriteStateAsync();
         return new Constants.Unit().ToSuccessResponse();
     }
 

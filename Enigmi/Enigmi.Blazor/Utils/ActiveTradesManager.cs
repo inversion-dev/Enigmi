@@ -57,8 +57,6 @@ public class ActiveTradesManager
         }
     }
 
-    //public GetActiveTradeListResponse.Trade? SelectedTrade { get; set; }
-
     public Guid? TradeId { get; private set; }
 
     public async void RequestActiveTradeList()
@@ -78,13 +76,7 @@ public class ActiveTradesManager
             OffersReceived = activeTradeListResponse.OffersReceived;
             OffersMade = activeTradeListResponse.OffersMade;
 
-            LastUpdate = DateTime.UtcNow;
-
-            /*if (SelectedTrade != null)
-            {
-                //should the trade view be closed when this results in 
-                SelectedTrade = OffersReceived.Union(OffersMade).SingleOrDefault(x => x.Id == TradeId); 
-            }*/
+            LastUpdate = DateTime.UtcNow;            
 
             var requiredPuzzleDefinitionIds = OffersReceived.Union(OffersMade)
                 .Select(x => x.TradeDetails.InitiatingParty.PuzzleDefinitionId).Union(
@@ -110,18 +102,11 @@ public class ActiveTradesManager
     }
 
     public void SetSelectedTradeDetail(GetActiveTradeListResponse.Trade trade)
-    {
-        //SelectedTrade = trade;
+    {     
         TradeId = trade.Id;
         OnTradeViewRequestedEvent.Trigger(trade);
     }
 
-    public void ClearSelectedTradeDetail()
-    {
-        //SelectedTrade = null;
-        TradeId = null;
-    }
-    
     public TimeSpan? TimeLeft (GetActiveTradeListResponse.Trade? trade) => 
         (trade != null 
          && trade.InitiatingPartySignUtcDeadline.HasValue

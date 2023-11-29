@@ -17,7 +17,7 @@ public interface IActivePuzzlePieceListGrain : IGrainWithIntegerKey
 
     Task<GetPotentialTradeResponse> FindPotentialTrades(string initiatingStakingAddress, Guid puzzlePieceDefinitionId);
 
-    Task<Domain.ValueObjects.TradeDetail?> GetPotentialTrade(string initiatingStakingAddress, string initiatingPuzzlePieceId,
+    Task<TradeDetail?> GetPotentialTrade(string initiatingStakingAddress, string initiatingPuzzlePieceId,
         string counterpartyPuzzlePieceId, string counterpartyPieceStakingAddress);
 
     Task<ResultOrError<GetPuzzleDefinitionsResponse>> GetPuzzleDefinitions(IEnumerable<Guid> puzzlePieceDefinitionIds);

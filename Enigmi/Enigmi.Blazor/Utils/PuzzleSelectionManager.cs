@@ -48,9 +48,13 @@ public class PuzzleSelectionManager
         }
     }
 
+    private List<Guid> RequiredPuzzleDefinitionIds { get; set; } = new List<Guid>();
+
     public event EventHandler? OnPuzzleSelectionChanged;
 
-    public void UpdateUserPuzzles(List<UserPuzzle> userPuzzles)
+    public event EventHandler? OnUserPuzzlesUpdated;
+
+    public async Task UpdateUserPuzzles(List<UserPuzzle> userPuzzles)
     {
         Puzzles = userPuzzles.ThrowIfNull();
 
@@ -70,6 +74,9 @@ public class PuzzleSelectionManager
             Index = 0;
             SelectedPuzzleDefinitionId = Puzzles[Index].PuzzleId;
         }
+
+        await EnsurePuzzleDefinitionsAreLoaded();
+        OnUserPuzzlesUpdated?.Invoke(this, EventArgs.Empty);
     }
 
     public void Next()
@@ -123,36 +130,44 @@ public class PuzzleSelectionManager
     }
 
     public async Task EnsurePuzzleDefinitionsAreLoaded(IEnumerable<Guid> requiredPuzzleDefinitionIds)
+    {
+        RequiredPuzzleDefinitionIds = RequiredPuzzleDefinitionIds.Union(requiredPuzzleDefinitionIds).Distinct().ToList();
+        await EnsurePuzzleDefinitionsAreLoaded();
+        OnUserPuzzlesUpdated?.Invoke(this, EventArgs.Empty);
+    }
+
+    public async Task EnsurePuzzleDefinitionsAreLoaded()
     {        
-        var loadedPuzzleDefinitionIds = this.AllPuzzles.Select(x => x.PuzzleId).ToList();
-        var missingPuzzleDefinitionIds = requiredPuzzleDefinitionIds.ToList().Except(loadedPuzzleDefinitionIds).ToList();
-     
+        var loadedPuzzleDefinitionIds = this.Puzzles == null ? new List<Guid>() : this.Puzzles.Select(x => x.PuzzleId).ToList();
+        var missingPuzzleDefinitionIds = RequiredPuzzleDefinitionIds.Except(loadedPuzzleDefinitionIds).ToList();       
+
+        PlatformUserPuzzles.Clear();
         if (!missingPuzzleDefinitionIds.Any())
-        {
+        {            
             return;
         }
-
+        
         var puzzleDefinitionListResponse = await this.ApiClient.SendAsync(new GetPuzzleDefinitionsRequest(missingPuzzleDefinitionIds));
         if (puzzleDefinitionListResponse != null)
         {
-            var puzzles = puzzleDefinitionListResponse.PuzzleDefinitions.Select(x => new UserPuzzle(
-                x.Id,
+            var puzzles = puzzleDefinitionListResponse.PuzzleDefinitions.Select(x => new UserPuzzle(                
                 x.Id,
                 x.Title,
                 x.PuzzleCollectionTitle,
                 x.NumberOfAllowedBuilds,
                 x.NumberOfCompletedBuilds,
                 x.PuzzleSize,
-                x.PuzzlePieceDefinitions.Select(ConvertToUserPuzzlePiece).ToList()       
+                x.PuzzlePieceDefinitions.Select(ConvertToUserPuzzlePiece).ToList()
             ));
 
             PlatformUserPuzzles.AddRange(puzzles);
-        }
+        }        
     }
 
     private static UserPuzzlePiece ConvertToUserPuzzlePiece(GetPuzzleDefinitionsResponse.PuzzlePieceDefinition puzzlePieceDefinition)
     {
         var puzzlePiece = new UserPuzzlePiece(puzzlePieceDefinition.Id);
+
         puzzlePiece.SetPuzzlePiece(new PuzzlePiece(
             puzzlePieceDefinition.Id, 
             puzzlePieceDefinition.PuzzleDefinitionId,

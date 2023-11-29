@@ -1,10 +1,12 @@
-﻿using CardanoSharp.Wallet.Extensions.Models.Transactions;
+﻿using CardanoSharp.Wallet.CIPs.CIP14.Extensions;
+using CardanoSharp.Wallet.Extensions.Models.Transactions;
 using CardanoSharp.Wallet.Models;
 using CardanoSharp.Wallet.Models.Transactions;
 using CardanoSharp.Wallet.Utilities;
 using Domain.ValueObjects;
 using Enigmi.Common;
 using Utxo = CardanoSharp.Wallet.Models.Utxo;
+using static System.FormattableString;
 
 namespace Enigmi.Domain.Utils;
 
@@ -64,5 +66,10 @@ public static class UtxoUtility
         
         return Convert.ToHexString(HashUtility.Blake2b256(transaction.TransactionBody.GetCBOR(transaction.AuxiliaryData).EncodeToBytes()))
             .ToLowerInvariant();
+    }
+    
+    public static string BuildUtxoSubscriptionName(string txId, uint index)
+    {
+        return Invariant($"{txId}-{index}");
     }
 }

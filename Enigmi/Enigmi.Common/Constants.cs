@@ -5,6 +5,7 @@ public class Constants
 	public static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
 
     public const string PuzzleCollectionSnifferGrainKey = "PuzzleCollectionSnifferGrain";
+    public const string ActiveUtxoReservationsListGrainKey = "ActiveUtxoReservationsListGrain";
     
     public const string StreamNamespace = "enigmi";
     public const string StreamProvider = "event-hub";

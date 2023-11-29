@@ -1,4 +1,5 @@
-﻿using Enigmi.Blazor.Events;
+﻿using Blazored.Toast.Services;
+using Enigmi.Blazor.Events;
 using Enigmi.Blazor.Utils;
 using Enigmi.Domain.ValueObjects;
 using Enigmi.Messages.SignalRMessage;
@@ -21,9 +22,14 @@ public partial class TradeLists : IDisposable
     [Inject]
     public ActiveTradesManager ActiveTradesManager { get; set; } = null!;
 
+    [Inject]
+    private IToastService ToastService { get; set; } = null!;
+
     private int UnseenOffersCount { get; set; } = 0;
 
     private int InitiatingSignTradeCountdown { get; set; } = 0;
+    
+    private int TradeTimeoutInSeconds { get; set; }
 
     private TradePanelTab ActiveTab { get; set; } = TradePanelTab.Unknown;    
 
@@ -39,11 +45,16 @@ public partial class TradeLists : IDisposable
 
     public List<string> OfflineStakingAddresses { get; set; } = new List<string>();
     
-    private System.Timers.Timer Timer { get; set; } = new System.Timers.Timer(1000);
+    private System.Timers.Timer CountdownRefreshTimer { get; set; } = new System.Timers.Timer(1000);
+
+    private System.Timers.Timer ClearUnseenOffersTimer { get; set; } = new System.Timers.Timer(5000);
+
+    private List<Guid> TimedoutOrderIds = new List<Guid>();
 
 
     private void ResetView()
     {
+        TimedoutOrderIds.Clear();
         this.ActiveTradesManager.Clear();
         OfflineStakingAddresses.Clear();
     }
@@ -66,57 +77,114 @@ public partial class TradeLists : IDisposable
         {
             ActiveTradesManager.RequestActiveTradeList();
             ActiveTradesManager.OnLoadingStateChanged += ActiveTradesManager_OnLoadingStateChanged;
-            Timer.Elapsed += (sender, args) =>
-            {
-                var mostUrgentOfferMade = GetMostUrgentOfferMade();
 
-                if (mostUrgentOfferMade != null)
+            ClearUnseenOffersTimer.Elapsed += (sender, args) =>
+            {
+                ClearUnseenOffersTimer.Stop();
+                UnseenOffersCount = 0;
+                StateHasChanged();
+            };
+
+            CountdownRefreshTimer.Elapsed += (sender, args) =>
+            {
+                if (ShouldCountdownTimerBeActive())
                 {
-                    InitiatingSignTradeCountdown = Convert.ToInt32(this.ActiveTradesManager.TimeLeft(mostUrgentOfferMade)?.TotalSeconds ?? 0);
+                    var mostUrgentOfferMade = GetMostUrgentOfferMade();
+                    if (mostUrgentOfferMade != null)
+                    {
+                        InitiatingSignTradeCountdown = Convert.ToInt32(this.ActiveTradesManager.TimeLeft(mostUrgentOfferMade)?.TotalSeconds ?? 0);
+                        TradeTimeoutInSeconds = mostUrgentOfferMade.TradeTimeoutInSeconds;
+                    }
                 }
                 else
                 {
                     InitiatingSignTradeCountdown = 0;
-                    Timer.Stop();
+                    CountdownRefreshTimer.Stop();
                 }
-                
+
+                NotifyUserOfExpiredTrades();
                 StateHasChanged();
-            };
+            };            
         }
         base.OnAfterRender(firstRender);
+    }
+
+    private void NotifyUserOfExpiredTrades()
+    {
+        var expiredOffersMade = this.ActiveTradesManager.OffersMade?.Where(x =>
+                        x.State == TradeState.CounterpartySigned
+                        && !TimedoutOrderIds.Contains(x.Id)
+                        && (this.ActiveTradesManager.TimeLeft(x)?.TotalSeconds ?? 0) <= 0);
+
+        if (expiredOffersMade != null)
+        {
+            foreach (var item in expiredOffersMade)
+            {
+                ToastService.ShowError("Deadline expired to sign trade");
+                TimedoutOrderIds.Add(item.Id);
+            }
+        }
+
+        var expiredOffersReceived = this.ActiveTradesManager.OffersReceived?.Where(x =>
+        x.State == TradeState.CounterpartySigned
+        && !TimedoutOrderIds.Contains(x.Id)
+        && (this.ActiveTradesManager.TimeLeft(x)?.TotalSeconds ?? 0) <= 0);
+
+        if (expiredOffersReceived != null)
+        {
+            foreach (var item in expiredOffersReceived)
+            {
+                TimedoutOrderIds.Add(item.Id);
+                ToastService.ShowError("Counter party failed to sign trade before the deadline");
+            }
+        }
     }
 
     private void ActiveTradesManager_OnLoadingStateChanged(object? sender, EventArgs e)
     {
         OfflineStakingAddresses.Clear();
+        TimedoutOrderIds.Clear();
 
-        if (!this.ActiveTradesManager.IsLoading && this.ActiveTradesManager.OffersMade != null)
+        if (!this.ActiveTradesManager.IsLoading)
         {
+            TimedoutOrderIds.Clear();
             StartCountdownTimerIfRequired();
-        }        
-        else
-        {
-            InitiatingSignTradeCountdown = 0;
-            Timer.Stop();
-        }
+        }                
 
         StateHasChanged();
     }
 
     private void StartCountdownTimerIfRequired()
-    {
-        var mostUrgentOfferMade = GetMostUrgentOfferMade();
-
-        if (mostUrgentOfferMade != null)
+    {        
+        if (ShouldCountdownTimerBeActive())
         {
-            InitiatingSignTradeCountdown = Convert.ToInt32(this.ActiveTradesManager.TimeLeft(mostUrgentOfferMade)?.TotalSeconds ?? 0);
-            Timer.Start();
-        }
+            CountdownRefreshTimer.Start();
+
+            var mostUrgentOfferMade = GetMostUrgentOfferMade();
+            if (mostUrgentOfferMade != null)
+            {
+                InitiatingSignTradeCountdown = Convert.ToInt32(this.ActiveTradesManager.TimeLeft(mostUrgentOfferMade)?.TotalSeconds ?? 0);             
+            }
+        }        
         else
         {
             InitiatingSignTradeCountdown = 0;
-            Timer.Stop();
+            CountdownRefreshTimer.Stop();
         }
+    }
+
+    private bool ShouldCountdownTimerBeActive()
+    {
+        var hasActiveSignedRecievedOrders = this.ActiveTradesManager.OffersReceived?.Any(x =>
+        x.State == TradeState.CounterpartySigned
+        && !TimedoutOrderIds.Contains(x.Id)
+        && (this.ActiveTradesManager.TimeLeft(x)?.TotalSeconds ?? 0) > 0);
+
+        var hasActiveOffersMadeOrders = this.ActiveTradesManager.OffersMade?.Any(x =>
+                x.State == TradeState.CounterpartySigned
+                && (this.ActiveTradesManager.TimeLeft(x)?.TotalSeconds ?? 0) > 0);
+
+        return (hasActiveSignedRecievedOrders ?? false) || (hasActiveOffersMadeOrders ?? false);
     }
 
     private GetActiveTradeListResponse.Trade? GetMostUrgentOfferMade()
@@ -136,6 +204,12 @@ public partial class TradeLists : IDisposable
         {
             Console.WriteLine("Offer Received");            
             UnseenOffersCount++;
+
+            if (ActiveTab == TradePanelTab.OffersReceived)
+            {
+                ClearUnseenOffersTimer.Start();
+            }
+
             ActiveTradesManager.RequestActiveTradeList();
         });
 

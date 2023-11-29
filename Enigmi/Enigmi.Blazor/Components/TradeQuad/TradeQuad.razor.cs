@@ -9,10 +9,10 @@ namespace Enigmi.Blazor.Components.TradeQuad;
 
 public partial class TradeQuad
 {
-    private static Random random = new Random();
+    private static Random _random = new Random();
 
     [Parameter, EditorRequired]
-    public GetPotentialTradesResponse.TradeDetail TradeDetail { get; set; } = null!;    
+    public TradeDetail TradeDetail { get; set; } = null!;    
 
     [Parameter, EditorRequired] 
     public List<UserPuzzle>? UserPuzzles { get; set; } = new();    
@@ -25,6 +25,12 @@ public partial class TradeQuad
 
     [Parameter]
     public int? CountdownValue { get; set; }
+    
+    [Parameter]
+    public int TradeTimeoutInSeconds { get; set; }
+
+    [Parameter]
+    public bool ShowLoadingIndicator { get; set; }
 
     [Inject]
     IJSRuntime JsRuntime { get; set; } = null!;    
@@ -33,7 +39,7 @@ public partial class TradeQuad
 
     private void OnMouseEnter()
     {
-        JsRuntime.InvokeVoidAsync("animateTradingPuzzlePieces", ElementId.ToString());
+        JsRuntime.InvokeVoidAsync("animateTradingPuzzlePieces", ElementId);
     }    
 
     public TradeParty GetParty(TradePartyType tradeParty)
@@ -57,6 +63,6 @@ public partial class TradeQuad
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         return new string(Enumerable.Repeat(chars, length)
-            .Select(s => s[random.Next(s.Length)]).ToArray());
+            .Select(s => s[_random.Next(s.Length)]).ToArray());
     }
 }

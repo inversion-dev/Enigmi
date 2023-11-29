@@ -197,6 +197,9 @@ public class ClusterFixture : IDisposable
         await CreateDropFolder(blobNames, "4");
         await CreateDropFolder(blobNames, "5");
         await CreateDropFolder(blobNames, "6");
+        await CreateDropFolder(blobNames, "7");
+        await CreateDropFolder(blobNames, "8");
+        await CreateDropFolder(blobNames, "9");
     }
 
     private async Task CreateDropFolder(List<string> blobNames, string postFix)

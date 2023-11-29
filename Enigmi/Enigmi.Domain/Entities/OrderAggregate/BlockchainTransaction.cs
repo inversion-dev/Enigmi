@@ -67,12 +67,12 @@ public class BlockchainTransaction
 		string mnemonic, 
 		uint policyClosingSlot)
 	{
-		userWalletAvailableAssets.ThrowIfNullOrEmpty();
+		userWalletAvailableAssets.ThrowIfNull();
 		paymentToAddress.ThrowIfNull();
 		paymentFromAddress.ThrowIfNull();
 		networkParams.ThrowIfNull();
 		mnemonic.ThrowIfNullOrWhitespace();
-		puzzlePieceMetadataList.ThrowIfNullOrEmpty();
+		puzzlePieceMetadataList.ThrowIfNull();
 		
 		long transactionTtl = latestSlot + ttl;
 
@@ -111,7 +111,7 @@ public class BlockchainTransaction
 			foreach (var utxo in coinSelection.SelectedUtxos)
 			{
 		 		transactionBodyBuilder = transactionBodyBuilder.AddInput(utxo.TxHash, utxo.TxIndex);
-		        _userWalletInputBlockchainAssets.Add(new UtxoAsset(utxo.TxHash.ThrowIfNull(), utxo.TxIndex, Enigmi.Constants.LovelaceTokenAssetId, utxo.Balance.Lovelaces));
+		        _userWalletInputBlockchainAssets.Add(new UtxoAsset(utxo.TxHash.ThrowIfNull(), utxo.TxIndex, Enigmi.Constants.LovelaceTokenAssetId, utxo.Balance.Lovelaces, string.Empty));
 			}
 		}
 		catch (Exception ex)
@@ -129,8 +129,6 @@ public class BlockchainTransaction
 		
 		return new Enigmi.Constants.Unit().ToSuccessResponse();
 	}
-	
-	
 
 	private static IAuxiliaryDataBuilder BuildMetadataAndMintingTokens(List<OrderedPuzzlePiece> orderedPuzzlePieces,
 		IEnumerable<PuzzlePieceMetadataList.PuzzlePieceMetadata> puzzlePieceMetadataList, ITokenBundleBuilder tokenBundleBuilder, ITokenBundleBuilder changeBundleBuilder)

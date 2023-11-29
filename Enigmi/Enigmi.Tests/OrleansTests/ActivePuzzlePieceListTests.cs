@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CardanoSharp.Wallet.CIPs.CIP14.Extensions;
 using Domain.ValueObjects;
 using Enigmi.Common;
 using Enigmi.Domain.Entities.PuzzlePieceAggregate;
@@ -51,7 +52,7 @@ public class ActivePuzzlePieceListTests
             var utxoAssets = new List<UtxoAsset>();
             foreach (var orderedPuzzlePiece in order.OrderedPuzzlePieces)
             {
-                utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1));
+                utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1, orderedPuzzlePiece.BlockchainAssetId.ToAssetFingerprint()));
             }
             
             await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(utxoAssets,"aaa"));
@@ -83,7 +84,7 @@ public class ActivePuzzlePieceListTests
                 var puzzlePieceGrain = ClusterClient.GetGrain<IPuzzlePieceGrain>(orderedPuzzlePiece.Id);
                 var puzzlePiece = await puzzlePieceGrain.GetPuzzlePiece();
                 boughtPuzzlePieces.Add(puzzlePiece.ThrowIfNull());
-                utxoAssetsGroup.Add(new UtxoAsset(puzzlePiece.Id, 1, orderedPuzzlePiece.BlockchainAssetId, 1));
+                utxoAssetsGroup.Add(new UtxoAsset(puzzlePiece.Id, 1, orderedPuzzlePiece.BlockchainAssetId, 1, orderedPuzzlePiece.BlockchainAssetId.ToAssetFingerprint()));
             }
             
             await TestCompletedPuzzlePieceTrade(boughtPuzzlePieces, userWalletGrain1, userWalletGrain2, stakeAddress1);
@@ -218,7 +219,7 @@ public class ActivePuzzlePieceListTests
             var utxoAssets = new List<UtxoAsset>();
             foreach (var orderedPuzzlePiece in order.OrderedPuzzlePieces)
             {
-                utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1));
+                utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1, orderedPuzzlePiece.BlockchainAssetId.ToAssetFingerprint()));
             }
             
             var (_, orderGrain2) = await TestUtil.SimulatePlacingOrderAndWaitForOrderToComplete(ClusterClient,stakeAddress, quantityToBuy: 2);
@@ -226,7 +227,7 @@ public class ActivePuzzlePieceListTests
             
             foreach (var orderedPuzzlePiece in order2.OrderedPuzzlePieces)
             {
-                utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1));
+                utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1, orderedPuzzlePiece.BlockchainAssetId));
             }
             
             await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(utxoAssets, "aaa"));
@@ -251,7 +252,7 @@ public class ActivePuzzlePieceListTests
             var utxoAssets = new List<UtxoAsset>();
             foreach (var orderedPuzzlePiece in order.OrderedPuzzlePieces)
             {
-                utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1));
+                utxoAssets.Add(new UtxoAsset("blah", 1, orderedPuzzlePiece.BlockchainAssetId, 1, orderedPuzzlePiece.BlockchainAssetId.ToAssetFingerprint()));
             }
             
             await userWalletGrain.UpdateWalletState(new UpdateUserWalletStateCommand(utxoAssets, "aaa"));

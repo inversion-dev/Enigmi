@@ -87,6 +87,20 @@
         right: 60px;
         z-index: 3;
     }
+    
+    .countdown-outer-container
+    {
+        position: absolute; 
+        right: 150px; 
+        z-index: 2;        
+    }
+    
+    .countdown-inner-container
+    {
+        position:relative; top: -9px;
+        background-color: white;
+        border-radius: 20px;
+    }
 }
 
 .animation-item {

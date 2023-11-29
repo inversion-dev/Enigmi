@@ -2,210 +2,231 @@
 @using Enigmi.Blazor.Components.Spinner;
 @using Enigmi.Domain.ValueObjects
 
-@if (!IsVisible
-   || PuzzleSelectionManager.Puzzles == null
-   || Trade == null
-   || TradeDetail == null)
-{   
-    <Spinner IsLoading="IsVisible"></Spinner>    
+@if (!IsVisible)
+{
     return;
 }
 
-<div class="trade-view">    
-    
+<div class="trade-view">
+
     <div class="trade-view-header">
         <h5>Trade Management</h5>
         <button type="button" class="btn-close" aria-label="Close" @onclick="ClosePanel"></button>
     </div>
 
-    <div class="quad-action-section">
-        <div class="quad-side">
-            <TradeQuad TradeDetail="TradeDetail" UserPuzzles="PuzzleSelectionManager.AllPuzzles">
-            </TradeQuad>
-        </div>
-        <div class="action-side">
-            @if (Trade.InitiatingPartySignUtcDeadline != null && (Trade.TradeState is TradeState.New
-                    or TradeState.CounterpartySigned))
-            {
-                @if (TimeLeft != null)
+    @if (PuzzleSelectionManager.Puzzles == null
+    || Trade == null
+    || TradeDetail == null)
+    {
+        <Spinner IsLoading="IsVisible"></Spinner>
+    }
+    else
+    {
+        <div class="quad-action-section">
+            <div class="quad-side">
+                <TradeQuad TradeDetail="TradeDetail" UserPuzzles="PuzzleSelectionManager.AllPuzzles">
+                </TradeQuad>
+            </div>
+            <div class="action-side">
+                @if (Trade.IsAvailable)
                 {
-                    <div class="count-down-box">                        
-                        @if (TimeLeft.Value.TotalSeconds > 0)
-                        {   
-                            if (Trade.TradeState == TradeState.CounterpartySigned)
-                            {
-                                if (this.WalletConnection.SelectedStakingAddress == TradeDetail.InitiatingParty.StakingAddress
-                                && SignedTrade == false
-                                && Trade.TradeState == TradeState.CounterpartySigned)
+                    @if (Trade.InitiatingPartySignUtcDeadline != null && (Trade.TradeState is TradeState.New or TradeState.CounterpartySigned))
+                    {
+                        @if (TimeLeft != null)
+                        {
+                            <div class="count-down-box">
+                                @if (TimeLeft.Value.TotalSeconds > 0)
                                 {
-                                    <ActionButton ClickAction="SignTrade" CustomCss="green-btn">Sign</ActionButton>
+                                    if (Trade.TradeState == TradeState.CounterpartySigned)
+                                    {
+                                        if (this.WalletConnection.SelectedStakingAddress == TradeDetail.InitiatingParty.StakingAddress
+                                        && Trade.TradeState == TradeState.CounterpartySigned)
+                                        {
+                                            <ActionButton ClickAction="SignTrade" CustomCss="green-btn">Sign</ActionButton>
+                                        }
+                                        else
+                                        {
+                                            <span>Awaiting Counterparty's Acceptance</span>
+                                        }
+                                    }
+
+                                    <span class="badge text-bg-light">
+                                        @TimeLeft.Value.Minutes.ToString().PadLeft(2, '0') <span>:</span> @TimeLeft.Value.Seconds.ToString().PadLeft(2, '0')
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span>Awaiting Counterparty's Acceptance</span>        
-                                }                                
-                            }
-
-                            <span class="badge text-bg-light">
-                                @TimeLeft.Value.Minutes.ToString().PadLeft(2, '0') <span>:</span> @TimeLeft.Value.Seconds.ToString().PadLeft(2, '0')
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="badge text-bg-light">00:00</span>
-                        }
-                    </div>
-                }                
-            }
-            @if (Trade.TradeState is TradeState.Submitted or TradeState.FullySigned)
-            {
-                <div class="blockchain-status-box">
-                    <Spinner IsLoading="true"></Spinner>
-                    @if (Trade.TradeState is TradeState.Submitted)
-                    {
-                        <label>@Trade.NumberOfConfirmations Confirmations</label>                     
-                    }                    
-                </div>
-            }            
-
-            @if (this.WalletConnection.SelectedStakingAddress == TradeDetail.Counterparty.StakingAddress 
-                && Trade.TradeState == TradeState.New
-                && !this.AcceptedTrade)
-            {
-                <ActionButton ClickAction="AcceptTrade" CustomCss="green-btn">Accept</ActionButton>
-            }
-
-            @if (this.WalletConnection.SelectedStakingAddress == TradeDetail.Counterparty.StakingAddress 
-            && Trade.TradeState == TradeState.CounterpartySigned
-            && TimeLeft?.TotalSeconds <= 0
-            && !this.AcceptedTrade)
-            {
-                <ActionButton ClickAction="AcceptTrade" CustomCss="green-btn">Retry Accept</ActionButton>
-            }
-
-            @if (this.WalletConnection.SelectedStakingAddress == TradeDetail.InitiatingParty.StakingAddress
-            && (this.Trade.TradeState is TradeState.New
-                or TradeState.CounterpartySigned))
-            {
-                <ActionButton ClickAction="CancelTrade" CustomCss="red-btn">Cancel Trade</ActionButton>
-            }
-        </div>
-    </div>
-    
-
-    <div class="text-center m-1">
-        @if (IsTradeDetailVisible)
-        {
-            <div class="trade-information-details">
-                <div class="card text-center">
-                    <div class="card-header">
-                        <ul class="nav nav-tabs card-header-tabs">
-                            <li class="nav-item">
-                                <a class="nav-link @(SelectedTab == Tab.Tab1 ? "active" : "")" href="#" @onclick="() => SetActiveTab(Tab.Tab1)">
-                                    <img class="image-border" src="@GetImagePath(TradeDetail.InitiatingParty)" style="opacity: 1;" />
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link @(SelectedTab == Tab.Tab2 ? "active" : "")" href="#" @onclick="() => SetActiveTab(Tab.Tab2)">
-                                    <img src="images/trade.svg">
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link @(SelectedTab == Tab.Tab3 ? "active" : "" )" @onclick="() => SetActiveTab(Tab.Tab3)" href="#">
-                                    <img class="image-border" src="@GetImagePath(TradeDetail.Counterparty)" />
-                                </a>
-                            </li>
-                        </ul><button type="button" class="btn-close" @onclick="HideTradeDetail" aria-label="Close"></button>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="trade-management-item-body">
-                            <div class="trade-management-item-body-tab">
-                                @if (SelectParty != null)
-                                {
-                                    <div class="puzzle-piece-info">
-                                        <h5>Puzzle Piece Info</h5>
-                                        <div class="info-container">
-                                            <img src="@GetImagePath(SelectParty)" class="image-border" style="cursor: pointer;">
-                                            @if (PartyPuzzleInformation != null)
-                                            {
-                                                <div class="info-item-container">
-                                                    <div class="info-item">
-                                                        <label class="info-label"> Puzzle Name </label>
-                                                        <div class="info-value">@PartyPuzzleInformation.PuzzleTitle</div>
-                                                    </div>
-                                                    <div class="info-item">
-                                                        <label class="info-label"> Puzzle Collection </label>
-                                                        <div class="info-value">@PartyPuzzleInformation.PuzzleCollectionTitle</div>
-                                                    </div>
-                                                    <div class="info-item">
-                                                        <label class="info-label"> Puzzle Size </label>
-                                                        <div class="info-value">
-                                                            @PartyPuzzleInformation.PuzzleSize
-                                                        </div>
-                                                    </div>
-                                                    <div class="info-item">
-                                                        <label class="info-label"> Minting Transaction </label>
-                                                        <div class="info-value">
-                                                            @Trade.TransactionId &nbsp;
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            }
-                                        </div>
-                                    </div>
+                                    <span class="badge text-bg-light">00:00</span>
                                 }
-
-                                @if (SelectedTab == Tab.Tab2)
+                            </div>
+                        }
+                    }
+                    @if (Trade.TradeState is TradeState.Submitted or TradeState.FullySigned)
+                    {
+                        <div class="blockchain-status-box">
+                            <Spinner IsLoading="true"></Spinner>
+                            @if (Trade.TradeState is TradeState.Submitted)
+                            {
+                                @if (Trade.NumberOfConfirmations == 0)
                                 {
-                                    <h5>Trade Information</h5>
-                                    <div class="info-container">
-                                        <div class="info-item-container">
-                                            <div class="info-item">
-                                                <label class="info-label"> Status </label>
-                                                <div class="info-value"> 
-                                                    @if (Trade.TradeState == TradeState.New)
-                                                    {
-                                                        <span>&nbsp;</span>
-                                                    }
-                                                    else if (Trade.TradeState == TradeState.CounterpartySigned)
-                                                    {
-                                                        <span>Pending</span>
-                                                    }
-                                                    else if (Trade.TradeState == TradeState.FullySigned)
-                                                    {
-                                                        <span>Fully Signed</span>
-                                                    }
-                                                    else if (Trade.TradeState == TradeState.Submitted)
-                                                    {
-                                                        <span>Submitted</span>
-                                                    }
-                                                    else if (Trade.TradeState == TradeState.SubmissionFailed)
-                                                    {
-                                                        <span>Submission Failed</span>
-                                                    }
-                                                    else if (Trade.TradeState == TradeState.Cancelled)
-                                                    {
-                                                        <span>Cancelled</span>
-                                                    }
-                                                    else if (Trade.TradeState == TradeState.Completed)
-                                                    {
-                                                        <span>Completed</span>
-                                                    }
+                                    <label>Submitting ....</label>
+                                }
+                                else
+                                {
+                                    <label>@Trade.NumberOfConfirmations of @Trade.ConfirmationsRequired confirmations</label>
+                                }
+                            }
+                        </div>
+                    }
+
+                    @if (Trade.TradeState is TradeState.Completed)
+                    {
+                        <div><a target="_blank" class="link-overflow" href="@(ClientAppSettings.CardanoScanUrl + Trade.TransactionId)">@Trade.TransactionId</a></div>
+                    }
+
+                    @if (this.WalletConnection.SelectedStakingAddress == TradeDetail.Counterparty.StakingAddress
+                                     && Trade.TradeState == TradeState.New)
+                    {
+                        <ActionButton ClickAction="AcceptTrade" CustomCss="green-btn">Accept</ActionButton>
+                    }
+
+                    @if (this.WalletConnection.SelectedStakingAddress == TradeDetail.Counterparty.StakingAddress
+                                     && Trade.TradeState == TradeState.CounterpartySigned
+                                     && TimeLeft?.TotalSeconds <= 0)
+                    {
+                        <ActionButton ClickAction="AcceptTrade" CustomCss="green-btn">Retry Accept</ActionButton>
+                    }
+
+                    @if (this.WalletConnection.SelectedStakingAddress == TradeDetail.InitiatingParty.StakingAddress
+                                     && (this.Trade.TradeState is TradeState.New
+                                     or TradeState.CounterpartySigned))
+                    {
+                        <ActionButton ClickAction="CancelTrade" CustomCss="red-btn">Cancel Trade</ActionButton>
+                    }
+                    
+                }
+                else
+                {
+                    <div>Trade is on Hold</div>
+                }
+            </div>
+        </div>
+
+
+        <div class="text-center m-1">
+            @if (IsTradeDetailVisible)
+            {
+                <div class="trade-information-details">
+                    <div class="card text-center">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs">
+                                <li class="nav-item">
+                                    <a class="nav-link @(SelectedTab == Tab.Tab1 ? "active" : "")" href="#" @onclick="() => SetActiveTab(Tab.Tab1)">
+                                        <img class="image-border" src="@GetImagePath(TradeDetail.InitiatingParty)" style="opacity: 1;" />
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(SelectedTab == Tab.Tab2 ? "active" : "")" href="#" @onclick="() => SetActiveTab(Tab.Tab2)">
+                                        <img src="images/trade.svg">
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(SelectedTab == Tab.Tab3 ? "active" : "" )" @onclick="() => SetActiveTab(Tab.Tab3)" href="#">
+                                        <img class="image-border" src="@GetImagePath(TradeDetail.Counterparty)" />
+                                    </a>
+                                </li>
+                            </ul><button type="button" class="btn-close" @onclick="HideTradeDetail" aria-label="Close"></button>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="trade-management-item-body">
+                                <div class="trade-management-item-body-tab">
+                                    @if (SelectParty != null)
+                                    {
+                                        <div class="puzzle-piece-info">
+                                            <h5>Puzzle Piece Info</h5>
+                                            <div class="info-container">
+                                                <img src="@GetImagePath(SelectParty)" class="image-border" style="cursor: pointer;">
+                                                @if (PartyPuzzleInformation != null)
+                                                {
+                                                    <div class="info-item-container">
+                                                        <div class="info-item">
+                                                            <label class="info-label"> Puzzle Name </label>
+                                                            <div class="info-value">@PartyPuzzleInformation.PuzzleTitle</div>
+                                                        </div>
+                                                        <div class="info-item">
+                                                            <label class="info-label"> Puzzle Collection </label>
+                                                            <div class="info-value">@PartyPuzzleInformation.PuzzleCollectionTitle</div>
+                                                        </div>
+                                                        <div class="info-item">
+                                                            <label class="info-label"> Puzzle Size </label>
+                                                            <div class="info-value">
+                                                                @PartyPuzzleInformation.PuzzleSize
+                                                            </div>
+                                                        </div>
+                                                        <div class="info-item">
+                                                            <label class="info-label"> Minting Transaction </label>
+                                                            <div class="info-value">
+                                                                <a target="_blank" href="@(ClientAppSettings.CardanoScanUrl + Trade.TransactionId)">@Trade.TransactionId</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (SelectedTab == Tab.Tab2)
+                                    {
+                                        <h5>Trade Information</h5>
+                                        <div class="info-container">
+                                            <div class="info-item-container">
+                                                <div class="info-item">
+                                                    <label class="info-label"> Status </label>
+                                                    <div class="info-value">
+                                                        @if (Trade.TradeState == TradeState.New)
+                                                        {
+                                                            <span>&nbsp;</span>
+                                                        }
+                                                        else if (Trade.TradeState == TradeState.CounterpartySigned)
+                                                        {
+                                                            <span>Pending</span>
+                                                        }
+                                                        else if (Trade.TradeState == TradeState.FullySigned)
+                                                        {
+                                                            <span>Fully Signed</span>
+                                                        }
+                                                        else if (Trade.TradeState == TradeState.Submitted)
+                                                        {
+                                                            <span>Submitted</span>
+                                                        }
+                                                        else if (Trade.TradeState == TradeState.SubmissionFailed)
+                                                        {
+                                                            <span>Submission Failed</span>
+                                                        }
+                                                        else if (Trade.TradeState == TradeState.Cancelled)
+                                                        {
+                                                            <span>Cancelled</span>
+                                                        }
+                                                        else if (Trade.TradeState == TradeState.Completed)
+                                                        {
+                                                            <span>Completed</span>
+                                                        }
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                }
+                                    }
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
-        else
-        {
-            <ActionButton ClickAction="ShowTradeDetail" CustomCss="btn-dark w-100">Show Detail</ActionButton>
-        }
-    </div>
+            }
+            else
+            {
+                <ActionButton ClickAction="ShowTradeDetail" CustomCss="btn-dark w-100">Show Detail</ActionButton>
+            }
+        </div>
+    }
 </div>

@@ -17,7 +17,7 @@ public class Trade : DomainEntity
 		TradeDetail = detail.ThrowIfNull();
 		Id = id.ThrowIfEmpty();
 		InitiatingPartySignatureDeadlineTimespan = initiatingPartySignTimespanDeadline;
-		
+
 		RaiseEvent(new TradeCreated(id));
 	}
 
@@ -26,12 +26,42 @@ public class Trade : DomainEntity
     {
         
     }
+
+    
+    [JsonProperty]
+    private List<Utxo> ExternalReservedUtxos { get; set; } = new();
+    
+    public void AddExternalReservedUtxo(List<Utxo> utxos)
+    {
+	    foreach (var utxo in utxos)
+	    {
+		    if (ExternalReservedUtxos.Any(x => x.TxId == utxo.TxId && x.OutputIndexOnTx == utxo.OutputIndexOnTx))
+		    {
+			    continue;
+		    }
+	    
+		    ExternalReservedUtxos.Add(utxo);
+	    }
+    }
+
+    public void ClearExternalReservedUtxos()
+    {
+	    ExternalReservedUtxos.Clear();
+    }
+
+    public void RemoveExternalReservedUtxo(Utxo utxo)
+    {
+		ExternalReservedUtxos.Remove(utxo);
+    }
     
     [JsonProperty]
     public Guid Id { get; private set; }
 
 	[JsonProperty]
 	public TradeState State { get; set; }
+
+
+	public bool IsAvailable => !ExternalReservedUtxos.Any();
 
 	[JsonProperty] 
     public TradeDetail TradeDetail { get; set; } = null!;
@@ -48,10 +78,26 @@ public class Trade : DomainEntity
     [JsonProperty] 
     public uint NumberOfConfirmations { get; private set; } = 0;
     
+    private List<Utxo> _puzzlePieceRelatedUtxos = new List<Utxo>();
+
+    [JsonProperty] 
+    public IEnumerable<Utxo> PuzzlePieceRelatedUtxos
+    {
+	    get => _puzzlePieceRelatedUtxos.AsReadOnly();
+	    set => _puzzlePieceRelatedUtxos = value.ToList();
+    }
+    
     public void CancelTrade()
     {
+	    ClearExternalReservedUtxos();
         State = TradeState.Cancelled;
-        RaiseEvent(new WentOffline(Id));
+        RaiseEvent(new TradeCancelled(Id));
+    }
+
+    public void WentOffline()
+    {
+	    CancelTrade();
+	    RaiseEvent(new WentOffline(Id));
     }
     
     public ResultOrError<Enigmi.Constants.Unit> SignByCounterparty(string counterPartyWitnessCborHex)
@@ -135,6 +181,7 @@ public class Trade : DomainEntity
     public void BlockchainTransactionFailed()
     {
 	    State = TradeState.SubmissionFailed;
+	    RaiseEvent(new TradeBlockchainSubmissionFailed(Id));
     }
 
     public void MarkAsCompleted()
@@ -158,5 +205,11 @@ public class Trade : DomainEntity
     {
 	    State = TradeState.Submitted;
 	    RaiseEvent(new TradeBlockchainStatusChanged(Id));
+    }
+
+    public void SetPuzzlePieceUtxos(IEnumerable<Utxo> relatedUtxos)
+    {
+	    relatedUtxos.ThrowIfNullOrEmpty();
+	    PuzzlePieceRelatedUtxos = relatedUtxos;
     }
 }

@@ -20,7 +20,7 @@ public class BlockchainTransactionSubmission : DomainEntity
     }
 
     [JsonProperty]
-    public Guid OrderId { get; private set; }
+    public Guid SubscriptionKey { get; private set; }
     
     [JsonProperty]
     public string? TransactionId { get; private set; }
@@ -37,9 +37,9 @@ public class BlockchainTransactionSubmission : DomainEntity
     [JsonProperty]
     public int SubmissionTryCount { get; private set; }
 
-    public void SetOrderId(Guid orderId)
+    public void SetSubscriptionKey(Guid subscriptionKey)
     {
-        OrderId = orderId.ThrowIfEmpty();
+        SubscriptionKey = subscriptionKey.ThrowIfEmpty();
     }
     public void SetTransactionId(string transactionId)
     {
@@ -145,7 +145,7 @@ public class BlockchainTransactionSubmission : DomainEntity
 
     public void MarkAsOnChain(uint confirmationCount)
     {
-        RaiseEvent(new BlockchainTransactionStateUpdated(OrderId, confirmationCount));
+        RaiseEvent(new BlockchainTransactionStateUpdated(SubscriptionKey, confirmationCount));
         if (!IsTransitionAllowed(BlockchainTransactionProcessState.OnChain))
         {
             return;

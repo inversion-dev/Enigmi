@@ -49,10 +49,11 @@ public class ActivePuzzlePieceList : DomainEntity
         _puzzleDefinitionDataDictionary.Add(puzzleDefinitionId, puzzleDefinition);
     }
 
-    public List<UserWalletTradeDetailList> FindPotentialTrades(string initiatingStakingAddress, 
-        Guid puzzlePieceDefinitionId, 
-        int maxNumberOfTradesToReturn, 
-        int maxStakingAddressAddressReturnCount)
+    public List<UserWalletTradeDetailList> FindPotentialTrades(string initiatingStakingAddress,
+        Guid puzzlePieceDefinitionId,
+        int maxNumberOfTradesToReturn,
+        int maxStakingAddressAddressReturnCount, 
+        IEnumerable<string> reservedPuzzlePieceIds)
     {
         initiatingStakingAddress.ThrowIfNullOrWhitespace();
         puzzlePieceDefinitionId.ThrowIfEmpty();
@@ -62,7 +63,8 @@ public class ActivePuzzlePieceList : DomainEntity
             .ToList();
 
         var availableCounterpartyPuzzlePieces = ActivePuzzlePieces
-            .Where(x => x.PuzzlePieceDefinitionId == puzzlePieceDefinitionId && x.StakingAddress != initiatingStakingAddress)
+            .Where(x => x.PuzzlePieceDefinitionId == puzzlePieceDefinitionId && x.StakingAddress != initiatingStakingAddress
+                    && !reservedPuzzlePieceIds.Contains(x.PuzzlePieceId))
             .ToList();
         
         var potentialTradesList = new ConcurrentBag<TradeDetail>();

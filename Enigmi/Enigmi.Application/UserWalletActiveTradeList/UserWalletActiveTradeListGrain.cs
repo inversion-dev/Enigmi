@@ -28,11 +28,24 @@ public class UserWalletActiveTradeListGrain : GrainBase<Domain.Entities.UserWall
         await Subscribe<TradeSignedByInitiatedParty>(this.GetPrimaryKeyString(), OnTradeSignedByInitiatedParty);
         await Subscribe<TradeCompleted>(this.GetPrimaryKeyString(), OnTradeCompleted);
         await Subscribe<TradeBlockchainStatusChanged>(this.GetPrimaryKeyString(), OnTradeBlockchainStatusChanged);
+        await Subscribe<TradeBlockchainSubmissionFailed>(this.GetPrimaryKeyString(), OnTradeBlockchainSubmissionFailed);
+        await Subscribe<TradeCancelled>(this.GetPrimaryKeyString(), OnTradeCancelled);
 
         await base.OnActivateAsync(cancellationToken);
     }
 
-    
+    private async Task OnTradeCancelled(TradeCancelled @event)
+    {
+        @event.ThrowIfNull();
+        await UpdateCachedGrain(@event.TradeId);
+    }
+
+    private async Task OnTradeBlockchainSubmissionFailed(TradeBlockchainSubmissionFailed @event)
+    {
+        @event.ThrowIfNull();
+        await UpdateCachedGrain(@event.TradeId);
+    }
+
 
     private async Task OnWentOffline(WentOffline @event)
     {
@@ -55,7 +68,8 @@ public class UserWalletActiveTradeListGrain : GrainBase<Domain.Entities.UserWall
             @event.TradeId,
             trade.TradeDetail, 
             trade.State,
-            trade.InitiatingPartySignUtcDeadline
+            trade.InitiatingPartySignUtcDeadline,
+            Convert.ToInt32(trade.InitiatingPartySignatureDeadlineTimespan.TotalSeconds)
         ));
         await WriteStateAsync();
 
@@ -138,7 +152,9 @@ public class UserWalletActiveTradeListGrain : GrainBase<Domain.Entities.UserWall
     public Task<IEnumerable<Domain.Entities.UserWalletActiveTradeListAggregate.Trade>> GetActiveTrades()
     {
         State.DomainAggregate.ThrowIfNull();
-        return Task.FromResult(State.DomainAggregate.ActiveTrades.Where(x => x.TradeState != TradeState.Cancelled && x.TradeState != TradeState.Completed)
+        return Task.FromResult(State.DomainAggregate.ActiveTrades.Where(x => x.TradeState is not TradeState.Cancelled
+                                                                            and not TradeState.SubmissionFailed
+                                                                            and not TradeState.Completed)
             .ToList()
             .AsEnumerable());
     }

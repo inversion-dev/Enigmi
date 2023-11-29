@@ -30,4 +30,9 @@ public class PuzzlePiece
     {
         AvailablePuzzlePieceCount = availablePuzzlePieceCount;
     }
+
+    public void UpdateIsOwnd(bool isOwned)
+    {
+        IsOwned = isOwned;
+    }
 }

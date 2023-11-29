@@ -6,6 +6,7 @@ using Enigmi.Messages.ActivePuzzlePieceList;
 using Enigmi.Messages.SignalRMessage;
 using Enigmi.Messages.Trade;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using static Enigmi.Messages.ActivePuzzlePieceList.GetPotentialTradesResponse;
 
 namespace Enigmi.Blazor.Components.TradeView;
@@ -17,12 +18,12 @@ public partial class TradeView : IDisposable
 
     [Inject]
     private PuzzleSelectionManager PuzzleSelectionManager { get; set; } = null!;
-
-    [Inject]
-    private ActiveTradesManager ActiveTradesManager { get; set; } = null!;
-
+    
     [Inject]
     private ApiClient ApiClient { get; set; } = null!;
+
+    [Inject]
+    private ClientAppSettings ClientAppSettings { get; set; } = null!;
 
     [Inject]
     private WalletConnection WalletConnection { get; set; } = null!;
@@ -62,20 +63,18 @@ public partial class TradeView : IDisposable
          && Trade.TradeState == TradeState.CounterpartySigned) 
             ? Trade.InitiatingPartySignUtcDeadline.Value - (Trade.ServerUtcTime + (DateTime.UtcNow - LastUpdate))
             : null;
-
-    private bool AcceptedTrade { get; set; }
-
     public Guid? SelectedTradeId { get; private set; }
 
-    private bool SignedTrade { get; set; }
-    
     private IDisposable? TradeUpdatedSubscription { get; set; }
+
+    private IDisposable? TradeAvailabilityChangedSubscription { get; set; }
 
     protected override void OnInitialized()
     {
         TradeViewRequestedEvent.Subscribe(OnTradeViewRequestedEvent);
         CountDownTimer = new System.Timers.Timer(1000);
         CountDownTimer.Elapsed += CountDownTimer_Elapsed;
+        PuzzleSelectionManager.OnUserPuzzlesUpdated += PuzzleSelectionManager_OnUserPuzzlesUpdated;
 
         TradeUpdatedSubscription = this.SignalRClient.On(async (TradeUpdated @event) =>
         {
@@ -84,8 +83,24 @@ public partial class TradeView : IDisposable
                 await RefreshTradeInformation();
             }
         });
+
+        TradeAvailabilityChangedSubscription = SignalRClient.On((TradeAvailabilityChanged @event) =>
+        {
+            if (SelectedTradeId == @event.TradeId && Trade != null)
+            {
+                Trade = Trade with { IsAvailable = @event.IsAvailable };
+                StateHasChanged();
+            }
+            
+        });
+
         base.OnInitialized();        
-    }    
+    }
+
+    private void PuzzleSelectionManager_OnUserPuzzlesUpdated(object? sender, EventArgs e)
+    {
+        StateHasChanged();
+    }
 
     private async void OnTradeViewRequestedEvent(object? sender, RequestTradeViewEventArgs e)
     {
@@ -113,8 +128,7 @@ public partial class TradeView : IDisposable
         StateHasChanged();
         StartCountdownTimerIfRequired();
 
-        AcceptedTrade = false;
-        SignedTrade = false;
+        SetActiveTab(SelectedTab);
     }
 
     private void StartCountdownTimerIfRequired()
@@ -131,15 +145,7 @@ public partial class TradeView : IDisposable
         {
             if (TimeLeft.Value.TotalSeconds < 0 && this.CountDownTimer != null)
             {
-                this.CountDownTimer.Stop();
-                if (this.WalletConnection.SelectedStakingAddress == TradeDetail!.InitiatingParty.StakingAddress)
-                {
-                    ToastService.ShowError("Deadline expired to sign trade");
-                }
-                else
-                {
-                    ToastService.ShowError("Counter party failed to sign trade before the deadline");
-                }                
+                this.CountDownTimer.Stop();                
             }
         }
         else
@@ -157,6 +163,8 @@ public partial class TradeView : IDisposable
             CountDownTimer.Elapsed -= CountDownTimer_Elapsed;
         }        
         TradeUpdatedSubscription?.Dispose();
+        TradeAvailabilityChangedSubscription?.Dispose();
+        PuzzleSelectionManager.OnUserPuzzlesUpdated -= PuzzleSelectionManager_OnUserPuzzlesUpdated;
     }
 
     private async Task SignTrade()
@@ -181,7 +189,6 @@ public partial class TradeView : IDisposable
             if (signTradeByCounterpartResponse != null)
             {
                 ToastService.ShowSuccess("Successfully signed trade");
-                this.SignedTrade = true;
                 await RefreshTradeInformation();
             }
         }
@@ -219,7 +226,6 @@ public partial class TradeView : IDisposable
             if (signTradeByCounterpartResponse != null)
             {
                 ToastService.ShowSuccess("Successfully signed trade");
-                this.AcceptedTrade = true;
                 await RefreshTradeInformation();
             }
         }
@@ -249,12 +255,12 @@ public partial class TradeView : IDisposable
 
     private string? GetImagePath(TradeParty party)
     {
-        if (TradeDetail == null || PuzzleSelectionManager.Puzzles == null)
+        if (TradeDetail == null)
         {
             return null;
         }
 
-        var puzzle = PuzzleSelectionManager.Puzzles.FirstOrDefault(x => x.PuzzleId == party.PuzzleDefinitionId);
+        var puzzle = PuzzleSelectionManager.AllPuzzles.FirstOrDefault(x => x.PuzzleId == party.PuzzleDefinitionId);
         if (puzzle == null)
         {
             return null;
@@ -280,7 +286,7 @@ public partial class TradeView : IDisposable
     public void SetActiveTab(Tab tab)
     {
         SelectedTab = tab;
-        if (TradeDetail == null || PuzzleSelectionManager.Puzzles == null)
+        if (TradeDetail == null)
         {
             return;
         }
@@ -302,7 +308,7 @@ public partial class TradeView : IDisposable
 
         if (this.SelectParty != null)
         {
-            var puzzle = PuzzleSelectionManager.Puzzles.FirstOrDefault(x => x.PuzzleId == SelectParty.PuzzleDefinitionId);
+            var puzzle = PuzzleSelectionManager.AllPuzzles.FirstOrDefault(x => x.PuzzleId == SelectParty.PuzzleDefinitionId);
             if (puzzle != null)
             {
                 this.PartyPuzzleInformation = new PartyPuzzleDetail { 

@@ -9,6 +9,7 @@
     margin-top: 100px;
     height: calc(100vh - 186px);
     width: 340px;
+    align-content: flex-start;
 
     .spinner-container {
         text-align: center;
@@ -93,5 +94,5 @@
         opacity: 0.8;
         z-index: 1;
         margin-top: 40%;
-    }    
+    }
 }

@@ -1,6 +1,7 @@
 ﻿using Enigmi.Application.Handlers;
 using Enigmi.Common;
 using Enigmi.Common.Messaging;
+using Enigmi.Grains.Shared.GrainSettings;
 using Enigmi.Grains.Shared.Trade;
 using Enigmi.Messages.ActivePuzzlePieceList;
 using Enigmi.Messages.Trade;
@@ -14,7 +15,7 @@ public class GetTradeRequestHandler : Handler<GetTradeRequest, GetTradeResponse>
 
     public GetTradeRequestHandler(IClusterClient clusterClient)
     {
-        ClusterClient = clusterClient;
+        ClusterClient = clusterClient.ThrowIfNull();
     }
 
     public override async Task<ResultOrError<GetTradeResponse>> Execute(GetTradeRequest request, CancellationToken cancellationToken)
@@ -22,6 +23,10 @@ public class GetTradeRequestHandler : Handler<GetTradeRequest, GetTradeResponse>
         request.ThrowIfNull();
         var tradeGrain = ClusterClient.GetGrain<ITradeGrain>(request.TradeId);
         var trade = await tradeGrain.GetTrade();
+        
+        var grainSettingsGrain = ClusterClient.GetGrain<IGrainSettingsGrain>(Constants.SingletonGrain);
+        var settings = await grainSettingsGrain.GetSettings();
+        var confirmationThreshold = settings.OrderBlockchainTransactionSettings.ConfirmationThreshold;
 
         var response = new GetTradeResponse(new Messages.Trade.Trade(
             trade.Id,
@@ -34,7 +39,9 @@ public class GetTradeRequestHandler : Handler<GetTradeRequest, GetTradeResponse>
             trade.BlockchainTransaction?.TransactionId,
             DateTime.UtcNow,
             trade.BlockchainTransaction?.UnsignedTransactionCborHex,
-            trade.NumberOfConfirmations));
+            trade.NumberOfConfirmations,
+            confirmationThreshold,
+            trade.IsAvailable));
 
         return response.ToSuccessResponse();
     }
